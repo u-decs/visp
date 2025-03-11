@@ -164,11 +164,11 @@ int main(int argc, char **argv)
      * Move to a safe position
      */
     vpColVector q(6, 0);
-    q[0] = -vpMath::rad(16);
-    q[1] = -vpMath::rad(120);
-    q[2] = vpMath::rad(120);
-    q[3] = -vpMath::rad(90);
-    q[4] = -vpMath::rad(90);
+   q[0] = vpMath::rad(0);
+    q[1] = vpMath::rad(-90);
+    q[2] = vpMath::rad(-135);
+    q[3] = vpMath::rad(45);
+    q[4] = vpMath::rad(90);
     q[5] = 0;
     std::cout << "Move to joint position: " << q.t() << std::endl;
     robot.setRobotState(vpRobot::STATE_POSITION_CONTROL);
@@ -235,7 +235,7 @@ int main(int argc, char **argv)
     vpFeatureTranslation t(vpFeatureTranslation::cdMc);
     vpFeatureThetaU tu(vpFeatureThetaU::cdRc);
     t.buildFrom(cdMc);
-    tu.buibuildFromld(cdMc);
+    tu.buildFrom(cdMc);
 
     vpFeatureTranslation td(vpFeatureTranslation::cdMc);
     vpFeatureThetaU tud(vpFeatureThetaU::cdRc);
@@ -383,7 +383,7 @@ int main(int argc, char **argv)
           std::cout << "error translation: " << error_tr << " ; error rotation: " << error_tu << std::endl;
 
         if (error_tr < convergence_threshold_t && error_tu < convergence_threshold_tu) {
-          has_converged = true;
+          has_converged = false;
           std::cout << "Servo task has converged" << std::endl;
           ;
           vpDisplay::displayText(I, 100, 20, "Servo task has converged", vpColor::red);

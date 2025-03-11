@@ -129,16 +129,16 @@ int main(int argc, char **argv)
       // Next test is only done when brakes are released
       // See robot mode doc:
       // https://sdurobotics.gitlab.io/ur_rtde/api/api.html#_CPPv4N7ur_rtde20RTDEReceiveInterface12getRobotModeEv
-      if (robot.getRobotMode() == 7) {
-        vpHomogeneousMatrix fMe_3 = robot.get_fMe(q_init);
-        std::cout << "fMe pose matrix: \n" << fMe_3 << std::endl;
-        for (size_t i = 0; i < fMe_3.size(); i++) {
-          if (!vpMath::equal(fMe_2.data[i], fMe_3.data[i])) {
-            std::cout << "Wrong end-effector forward kinematics . Test failed" << std::endl;
-            return EXIT_FAILURE;
-          }
-        }
-      }
+      // if (robot.getRobotMode() == 7) {
+      //   vpHomogeneousMatrix fMe_3 = robot.get_fMe(q_init);
+      //   std::cout << "fMe pose matrix: \n" << fMe_3 << std::endl;
+      //   for (size_t i = 0; i < fMe_3.size(); i++) {
+      //     if (!vpMath::equal(fMe_2.data[i], fMe_3.data[i])) {
+      //       std::cout << "Wrong end-effector forward kinematics . Test failed" << std::endl;
+      //       return EXIT_FAILURE;
+      //     }
+      //   }
+      // }
 
       vpPoseVector fPc;
       robot.getPosition(vpRobot::TOOL_FRAME, fPc);

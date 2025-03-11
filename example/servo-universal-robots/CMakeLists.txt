@@ -44,6 +44,8 @@ set(example_cpp
   servoUniversalRobotsPBVS.cpp
   UniversalRobotsMoveToPosition.cpp
   UniversalRobotsSavePosition.cpp
+  testingUniversalRobots.cpp
+  testThread.cpp
 )
 
 foreach(cpp ${example_cpp})
