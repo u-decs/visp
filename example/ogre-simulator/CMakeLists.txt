@@ -33,7 +33,7 @@
 #
 #############################################################################
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 project(example-ogre-simulator)
 
@@ -56,3 +56,5 @@ foreach(cpp ${example_cpp})
     visp_add_dependency(${cpp} "examples")
   endif()
 endforeach()
+
+# AROgreBasic cannot be used as unit test because requires a valid X11 context

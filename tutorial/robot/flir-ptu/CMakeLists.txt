@@ -1,6 +1,6 @@
-project(tutorial-robot-flir-ptu)
+cmake_minimum_required(VERSION 3.10)
 
-cmake_minimum_required(VERSION 3.5)
+project(tutorial-robot-flir-ptu)
 
 if(CMAKE_SYSTEM_NAME MATCHES WindowsPhone OR CMAKE_SYSTEM_NAME MATCHES WindowsStore)
   set(WINRT TRUE)

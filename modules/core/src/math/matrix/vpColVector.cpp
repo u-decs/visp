@@ -73,13 +73,13 @@ vpColVector vpColVector::operator+(const vpColVector &v) const
 
 vpTranslationVector vpColVector::operator+(const vpTranslationVector &t) const
 {
-  if (getRows() != 3) {
+  const unsigned int val_3 = 3;
+  if (getRows() != val_3) {
     throw(vpException(vpException::dimensionError, "Cannot add %d-dimension column vector to a translation vector",
                       getRows()));
   }
   vpTranslationVector s;
 
-  const unsigned int val_3 = 3;
   for (unsigned int i = 0; i < val_3; ++i) {
     s[i] = (*this)[i] + t[i];
   }
@@ -259,19 +259,9 @@ vpColVector::vpColVector(const std::vector<float> &v) : vpArray2D<double>(static
 }
 
 #if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
-vpColVector::vpColVector(vpColVector &&v) : vpArray2D<double>()
+vpColVector::vpColVector(vpColVector &&v) : vpArray2D<double>(std::move(v))
 {
-  rowNum = v.rowNum;
-  colNum = v.colNum;
-  rowPtrs = v.rowPtrs;
-  dsize = v.dsize;
-  data = v.data;
 
-  v.rowNum = 0;
-  v.colNum = 0;
-  v.rowPtrs = nullptr;
-  v.dsize = 0;
-  v.data = nullptr;
 }
 #endif
 
@@ -285,7 +275,9 @@ vpColVector vpColVector::operator-() const
 
   for (unsigned int i = 0; i < rowNum; ++i) {
     // move the d++ increment/decrement into a dedicated expression-statement
-    *(vd++) = -(*d++);
+    *vd = -(*d);
+    ++vd;
+    ++d;
   }
 
   return A;
@@ -300,7 +292,9 @@ vpColVector vpColVector::operator*(double x) const
 
   for (unsigned int i = 0; i < rowNum; ++i) {
     // move the d++ increment/decrement into a dedicated expression-statement
-    *(vd++) = (*d++) * x;
+    *vd = (*d) * x;
+    ++vd;
+    ++d;
   }
   return v;
 }
@@ -330,7 +324,9 @@ vpColVector vpColVector::operator/(double x) const
 
   for (unsigned int i = 0; i < rowNum; ++i) {
     // move the d++ increment/decrement into a dedicated expression-statement
-    *(vd++) = (*d++) / x;
+    *vd = (*d) / x;
+    ++vd;
+    ++d;
   }
   return v;
 }
@@ -466,24 +462,25 @@ std::vector<double> vpColVector::toStdVector() const
 #if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
 vpColVector &vpColVector::operator=(vpColVector &&other)
 {
-  if (this != &other) {
-    free(data);
-    free(rowPtrs);
-
-    rowNum = other.rowNum;
-    colNum = other.colNum;
-    rowPtrs = other.rowPtrs;
-    dsize = other.dsize;
-    data = other.data;
-
-    other.rowNum = 0;
-    other.colNum = 0;
-    other.rowPtrs = nullptr;
-    other.dsize = 0;
-    other.data = nullptr;
-  }
-
+  vpArray2D<double>::operator=(std::move(other));
   return *this;
+}
+
+/**
+ * @brief Create a column vector view of a raw data array.
+ * The view can modify the contents of the raw data array,
+ * but may not resize it and does not own it: the memory is not released by the vector
+ * and it should be freed by the user after the view is released.
+ *
+ * @param data the raw data
+ * @param rows Number of rows
+ * @return the column vector view
+ */
+vpColVector vpColVector::view(double *data, unsigned int rows)
+{
+  vpColVector v;
+  vpArray2D<double>::view(v, data, rows, 1);
+  return v;
 }
 
 vpColVector &vpColVector::operator=(const std::initializer_list<double> &list)
@@ -557,7 +554,9 @@ double vpColVector::dotProd(const vpColVector &a, const vpColVector &b)
   unsigned int a_rows_nbr = a.getRows();
   for (unsigned int i = 0; i < a_rows_nbr; ++i) {
     // Move the ad++ and bd++ increment/decrement into a dedicated expression-statement
-    c += *(ad++) * *(bd++);
+    c += (*ad) * (*bd);
+    ++ad;
+    ++bd;
   }
 
   return c;
@@ -713,7 +712,8 @@ double vpColVector::stdev(const vpColVector &v, bool useBesselCorrection)
 #else
   double mean_value = v.sum() / v.size();
   double sum_squared_diff = 0.0;
-  for (size_t i = 0; i < v.size(); i++) {
+  unsigned int v_size = v.size();
+  for (size_t i = 0; i < v_size; ++i) {
     sum_squared_diff += (v[i] - mean_value) * (v[i] - mean_value);
   }
 
@@ -735,7 +735,7 @@ vpMatrix vpColVector::skew(const vpColVector &v)
                       v.getRows()));
   }
 
-  M.resize(3, 3, false, false);
+  M.resize(rows_size, rows_size, false, false);
   const unsigned int index_0 = 0;
   const unsigned int index_1 = 1;
   const unsigned int index_2 = 2;
@@ -754,7 +754,8 @@ vpMatrix vpColVector::skew(const vpColVector &v)
 
 vpColVector vpColVector::crossProd(const vpColVector &a, const vpColVector &b)
 {
-  if ((a.getRows() != 3) || (b.getRows() != 3)) {
+  const unsigned int val_3 = 3;
+  if ((a.getRows() != val_3) || (b.getRows() != val_3)) {
     throw(vpException(vpException::dimensionError,
                       "Cannot compute the cross product between column "
                       "vector with dimension %d and %d",
@@ -969,7 +970,7 @@ std::ostream &vpColVector::cppPrint(std::ostream &os, const std::string &matrixN
   }
   std::cout << std::endl;
   return os;
-};
+}
 
 std::ostream &vpColVector::csvPrint(std::ostream &os) const
 {
@@ -980,7 +981,7 @@ std::ostream &vpColVector::csvPrint(std::ostream &os) const
     os << std::endl;
   }
   return os;
-};
+}
 
 std::ostream &vpColVector::maplePrint(std::ostream &os) const
 {
@@ -993,7 +994,7 @@ std::ostream &vpColVector::maplePrint(std::ostream &os) const
   }
   os << "])" << std::endl;
   return os;
-};
+}
 
 std::ostream &vpColVector::matlabPrint(std::ostream &os) const
 {
@@ -1009,7 +1010,7 @@ std::ostream &vpColVector::matlabPrint(std::ostream &os) const
     }
   }
   return os;
-};
+}
 
 #if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
 

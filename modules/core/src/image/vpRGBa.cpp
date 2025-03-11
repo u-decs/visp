@@ -87,32 +87,6 @@ vpRGBa &vpRGBa::operator=(const int &v)
 }
 
 /*!
-  Copy operator.
-*/
-vpRGBa &vpRGBa::operator=(const vpRGBa &v)
-{
-  this->R = v.R;
-  this->G = v.G;
-  this->B = v.B;
-  this->A = v.A;
-  return *this;
-}
-
-#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
-/*!
-  Move operator.
-*/
-vpRGBa &vpRGBa::operator=(const vpRGBa &&v)
-{
-  this->R = std::move(v.R);
-  this->G = std::move(v.G);
-  this->B = std::move(v.B);
-  this->A = std::move(v.A);
-  return *this;
-}
-#endif
-
-/*!
   Cast a vpColVector in a vpRGBa
 
   \param v : Input vector. v[0], v[1], v[2], v[3] are to make into
@@ -123,7 +97,8 @@ vpRGBa &vpRGBa::operator=(const vpRGBa &&v)
 */
 vpRGBa &vpRGBa::operator=(const vpColVector &v)
 {
-  if (v.getRows() != 4) {
+  const unsigned int val_4 = 4;
+  if (v.getRows() != val_4) {
     throw(vpException(vpException::dimensionError, "Bad vector dimension "));
   }
   const unsigned int index_0 = 0;

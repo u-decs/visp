@@ -4,9 +4,7 @@
 #include <visp3/ar/vpAROgre.h>
 #endif
 #include <visp3/blob/vpDot2.h>
-#include <visp3/gui/vpDisplayGDI.h>
-#include <visp3/gui/vpDisplayOpenCV.h>
-#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayFactory.h>
 #include <visp3/robot/vpSimulatorCamera.h>
 #include <visp3/vision/vpPose.h>
 #include <visp3/visual_features/vpFeatureBuilder.h>
@@ -54,7 +52,13 @@ void ogre_get_render_image(vpAROgre &ogre, const vpImage<unsigned char> &backgro
 
 int main()
 {
-#if defined(VISP_HAVE_OGRE) && (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
+#if defined(VISP_HAVE_OGRE) && defined(VISP_HAVE_DISPLAY)
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+  std::shared_ptr<vpDisplay> display;
+#else
+  vpDisplay *display = nullptr;
+#endif
+
   try {
     unsigned int thickness = 3;
 
@@ -92,6 +96,7 @@ int main()
       s << "Sphere" << i;
       name[i] = s.str();
       ogre.load(name[i], "Sphere.mesh");
+      ogre.setMaterial(name[i], "UniformBlue");
       ogre.setScale(name[i], 0.02f, 0.02f,
                     0.02f); // Rescale the sphere to 2 cm radius
       // Set the position of each sphere in the object frame
@@ -101,10 +106,16 @@ int main()
 
     // Add an optional point light source
     Ogre::Light *light = ogre.getSceneManager()->createLight();
-    light->setDiffuseColour(1, 1, 1);  // scaled RGB values
-    light->setSpecularColour(1, 1, 1); // scaled RGB values
-    light->setPosition((Ogre::Real)cdMo[0][3], (Ogre::Real)cdMo[1][3], (Ogre::Real)(-cdMo[2][3]));
+    light->setDiffuseColour(1., 1., 1.);  // scaled RGB values
+    light->setSpecularColour(1., 1., 1.); // scaled RGB values
     light->setType(Ogre::Light::LT_POINT);
+#if (VISP_HAVE_OGRE_VERSION < (1 << 16 | 10 << 8 | 0))
+    light->setPosition((Ogre::Real)cdMo[0][3], (Ogre::Real)cdMo[1][3], (Ogre::Real)(-cdMo[2][3]));
+#else
+    Ogre::SceneNode *spotLightNode = ogre.getSceneManager()->getRootSceneNode()->createChildSceneNode();
+    spotLightNode->attachObject(light);
+    spotLightNode->setPosition((Ogre::Real)cdMo[0][3], (Ogre::Real)cdMo[1][3], (Ogre::Real)(-cdMo[2][3]));
+#endif
 
     vpServo task;
     task.setServo(vpServo::EYEINHAND_CAMERA);
@@ -118,14 +129,10 @@ int main()
     ogre_get_render_image(ogre, background, cdMo, I);
 
 // Display the image in which we will do the tracking
-#if defined(VISP_HAVE_X11)
-    vpDisplayX d(I, 0, 0, "Camera view at desired position");
-#elif defined(VISP_HAVE_GDI)
-    vpDisplayGDI d(I, 0, 0, "Camera view at desired position");
-#elif defined(HAVE_OPENCV_HIGHGUI)
-    vpDisplayOpenCV d(I, 0, 0, "Camera view at desired position");
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+    display = vpDisplayFactory::createDisplay(I, 0, 0, "Camera view at desired position");
 #else
-    std::cout << "No image viewer is available..." << std::endl;
+    display = vpDisplayFactory::allocateDisplay(I, 0, 0, "Camera view at desired position");
 #endif
 
     vpDisplay::display(I);
@@ -221,12 +228,27 @@ int main()
   }
   catch (const vpException &e) {
     std::cout << "Catch a ViSP exception: " << e << std::endl;
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+    if (display != nullptr) {
+      delete display;
+    }
+#endif
     return EXIT_FAILURE;
   }
   catch (...) {
     std::cout << "Catch an exception " << std::endl;
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+    if (display != nullptr) {
+      delete display;
+    }
+#endif
     return EXIT_FAILURE;
   }
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+  if (display != nullptr) {
+    delete display;
+  }
+#endif
   return EXIT_SUCCESS;
 #endif
-  }
+}

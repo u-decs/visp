@@ -2,6 +2,14 @@
 #define LOG_TAG "org.visp.utils.Converters"
 #include "common.h"
 
+#ifdef ENABLE_VISP_NAMESPACE
+using namespace VISP_NAMESPACE_NAME;
+#endif
+
+#if ((VISP_CXX_STANDARD < VISP_CXX_STANDARD_17) && (defined(_MSVC_LANG)))
+const std::vector<bool> vpStatisticalTestShewhart::CONST_ALL_WECO_ACTIVATED = std::vector<bool>(vpStatisticalTestShewhart::COUNT_WECO -1, true);
+#endif
+
 jlongArray vector_vpColVector_to_List(JNIEnv *env, const std::vector<vpColVector> &V)
 {
   jlongArray result = env->NewLongArray(V.size());

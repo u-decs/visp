@@ -1,8 +1,7 @@
 /*! \example tutorial-grabber-v4l2.cpp */
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpImage.h>
-#include <visp3/gui/vpDisplayOpenCV.h>
-#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayFactory.h>
 #include <visp3/io/vpImageStorageWorker.h>
 #include <visp3/sensor/vpV4l2Grabber.h>
 
@@ -81,6 +80,11 @@ int main(int argc, const char *argv[])
 #ifdef ENABLE_VISP_NAMESPACE
   using namespace VISP_NAMESPACE_NAME;
 #endif
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+  std::shared_ptr<vpDisplay> display;
+#else
+  vpDisplay *display = nullptr;
+#endif
   try {
     int opt_device = 0;
     unsigned int opt_scale = 1; // Default value is 2 in the constructor. Turn
@@ -90,21 +94,17 @@ int main(int argc, const char *argv[])
     bool opt_display = true;
 
     for (int i = 1; i < argc; i++) {
-      if (std::string(argv[i]) == "--device") {
-        opt_device = std::atoi(argv[i + 1]);
-        i++;
+      if (std::string(argv[i]) == "--device" && i + 1 < argc) {
+        opt_device = std::atoi(argv[++i]);
       }
-      else if (std::string(argv[i]) == "--scale") {
-        opt_scale = (unsigned int)atoi(argv[i + 1]);
-        i++;
+      else if (std::string(argv[i]) == "--scale" && i + 1 < argc) {
+        opt_scale = (unsigned int)atoi(argv[++i]);
       }
-      else if (std::string(argv[i]) == "--seqname") {
-        opt_seqname = std::string(argv[i + 1]);
-        i++;
+      else if (std::string(argv[i]) == "--seqname" && i + 1 < argc) {
+        opt_seqname = std::string(argv[++i]);
       }
-      else if (std::string(argv[i]) == "--record") {
-        opt_record_mode = std::atoi(argv[i + 1]);
-        i++;
+      else if (std::string(argv[i]) == "--record" && i + 1 < argc) {
+        opt_record_mode = std::atoi(argv[++i]);
       }
       else if (std::string(argv[i]) == "--no-display") {
         opt_display = false;
@@ -149,18 +149,16 @@ int main(int argc, const char *argv[])
 
     std::cout << "Image size : " << I.getWidth() << " " << I.getHeight() << std::endl;
 
-    vpDisplay *d = nullptr;
     if (opt_display) {
-#if !(defined(VISP_HAVE_X11) || defined(VISP_HAVE_OPENCV))
+#if !(defined(VISP_HAVE_DISPLAY))
       std::cout << "No image viewer is available..." << std::endl;
       opt_display = false;
+#else
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+      display = vpDisplayFactory::createDisplay(I);
+#else
+      display = vpDisplayFactory::allocateDisplay(I);
 #endif
-    }
-    if (opt_display) {
-#ifdef VISP_HAVE_X11
-      d = new vpDisplayX(I);
-#elif defined(HAVE_OPENCV_HIGHGUI)
-      d = new vpDisplayOpenCV(I);
 #endif
     }
 
@@ -190,14 +188,16 @@ int main(int argc, const char *argv[])
     }
     image_queue.cancel();
     image_storage_thread.join();
-
-    if (d) {
-      delete d;
-    }
   }
   catch (const vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
   }
+
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+  if (display != nullptr) {
+    delete display;
+  }
+#endif
 #else
   (void)argc;
   (void)argv;

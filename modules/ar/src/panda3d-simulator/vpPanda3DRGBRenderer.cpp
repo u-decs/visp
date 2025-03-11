@@ -35,9 +35,13 @@
 #include "orthographicLens.h"
 #include "cardMaker.h"
 #include "texturePool.h"
+#include "graphicsOutput.h"
+#include "graphicsEngine.h"
+#include "windowFramework.h"
+
 
 BEGIN_VISP_NAMESPACE
-const char *vpPanda3DRGBRenderer::COOK_TORRANCE_VERT =
+const std::string vpPanda3DRGBRenderer::COOK_TORRANCE_VERT =
 "#version 330\n"
 "in vec3 p3d_Normal;\n"
 "in vec4 p3d_Vertex;\n"
@@ -76,7 +80,7 @@ const char *vpPanda3DRGBRenderer::COOK_TORRANCE_VERT =
 "  F0 = computeF0(p3d_Material.refractiveIndex, p3d_Material.metallic, p3d_Material.baseColor.xyz);\n"
 "}\n";
 
-const char *vpPanda3DRGBRenderer::COOK_TORRANCE_FRAG =
+const std::string vpPanda3DRGBRenderer::COOK_TORRANCE_FRAG =
 "// Version 330, specified when generating shader\n"
 "#define M_PI 3.1415926535897932384626433832795\n"
 "in vec3 oNormal;\n"
@@ -200,8 +204,8 @@ void vpPanda3DRGBRenderer::addNodeToScene(const NodePath &object)
   }
 
   PT(Shader) shader = Shader::make(Shader::ShaderLanguage::SL_GLSL,
-                                    COOK_TORRANCE_VERT,
-                                    makeFragmentShader(hasTexture, m_showSpeculars));
+                                   COOK_TORRANCE_VERT,
+                                   makeFragmentShader(hasTexture, m_showSpeculars));
 
   objectInScene.set_shader(shader);
 
@@ -239,18 +243,13 @@ void vpPanda3DRGBRenderer::setBackgroundImage(const vpImage<vpRGBa> &background)
   m_backgroundTexture->setup_2d_texture(background.getWidth(), background.getHeight(),
                                     Texture::ComponentType::T_unsigned_byte,
                                     Texture::Format::F_rgba8);
-  //m_backgroundTexture = TexturePool::load_texture("/home/sfelton/IMG_20230221_165330430.jpg");
+
   unsigned char *data = (unsigned char *)m_backgroundTexture->modify_ram_image();
 
   for (unsigned int i = 0; i < background.getHeight(); ++i) {
     const vpRGBa *srcRow = background[background.getHeight() - (i + 1)];
     unsigned char *destRow = data + i * background.getWidth() * 4;
-    for (unsigned int j = 0; j < background.getWidth(); ++j) {
-      destRow[j * 4] = srcRow[j].B;
-      destRow[j * 4 + 1] = srcRow[j].G;
-      destRow[j * 4 + 2] = srcRow[j].R;
-      destRow[j * 4 + 3] = srcRow[j].A;
-    }
+    memcpy(destRow, srcRow, background.getWidth() * 4);
   }
 }
 
@@ -278,6 +277,7 @@ void vpPanda3DRGBRenderer::getRender(vpImage<vpRGBa> &I) const
     data += rowIncrement;
   }
 }
+
 
 void vpPanda3DRGBRenderer::setupScene()
 {
@@ -307,18 +307,20 @@ void vpPanda3DRGBRenderer::setupRenderTarget()
   GraphicsEngine *engine = windowOutput->get_engine();
   GraphicsStateGuardian *gsg = windowOutput->get_gsg();
   GraphicsPipe *pipe = windowOutput->get_pipe();
-  m_colorBuffer = engine->make_output(pipe, "Color Buffer", m_renderOrder,
+  static int id = 0;
+  m_colorBuffer = engine->make_output(pipe, "Color Buffer" + std::to_string(id), m_renderOrder,
                                       fbp, win_prop, flags,
                                       gsg, windowOutput);
+  m_colorTexture = new Texture("Color texture" + std::to_string(id));
+  ++id;
   if (m_colorBuffer == nullptr) {
     throw vpException(vpException::fatalError, "Could not create color buffer");
   }
   m_buffers.push_back(m_colorBuffer);
   //m_colorBuffer->set_inverted(gsg->get_copy_texture_inverted());
-  m_colorTexture = new Texture();
   fbp.setup_color_texture(m_colorTexture);
   //m_colorTexture->set_format(Texture::Format::F_srgb_alpha);
-  m_colorBuffer->add_render_texture(m_colorTexture, GraphicsOutput::RenderTextureMode::RTM_copy_texture);
+  m_colorBuffer->add_render_texture(m_colorTexture, GraphicsOutput::RenderTextureMode::RTM_copy_texture, GraphicsOutput::RenderTexturePlane::RTP_color);
   m_colorBuffer->set_clear_color(LColor(0.f));
   m_colorBuffer->set_clear_color_active(true);
   DisplayRegion *region = m_colorBuffer->make_display_region();

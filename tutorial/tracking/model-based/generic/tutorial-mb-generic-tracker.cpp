@@ -1,9 +1,7 @@
 //! \example tutorial-mb-generic-tracker.cpp
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpIoTools.h>
-#include <visp3/gui/vpDisplayGDI.h>
-#include <visp3/gui/vpDisplayOpenCV.h>
-#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayFactory.h>
 #include <visp3/io/vpImageIo.h>
 //! [Include]
 #include <visp3/mbt/vpMbGenericTracker.h>
@@ -17,22 +15,33 @@ int main(int argc, char **argv)
   using namespace VISP_NAMESPACE_NAME;
 #endif
 
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+  std::shared_ptr<vpDisplay> display;
+#else
+  vpDisplay *display = nullptr;
+#endif
+
   try {
     std::string opt_videoname = "model/teabox/teabox.mp4";
     std::string opt_modelname = "model/teabox/teabox.cao";
     int opt_tracker = 2; // Hybrid tracker
 
-    for (int i = 0; i < argc; i++) {
-      if (std::string(argv[i]) == "--video")
-        opt_videoname = std::string(argv[i + 1]);
-      else if (std::string(argv[i]) == "--model")
-        opt_modelname = std::string(argv[i + 1]);
-      else if (std::string(argv[i]) == "--tracker")
-        opt_tracker = atoi(argv[i + 1]);
+    for (int i = 1; i < argc; i++) {
+      if (std::string(argv[i]) == "--video" && i + 1 < argc) {
+        opt_videoname = std::string(argv[++i]);
+      }
+      else if (std::string(argv[i]) == "--model" && i + 1 < argc) {
+        opt_modelname = std::string(argv[++i]);
+      }
+      else if (std::string(argv[i]) == "--tracker" && i + 1 < argc) {
+        opt_tracker = atoi(argv[++i]);
+      }
       else if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h") {
         std::cout << "\nUsage: " << argv[0]
-          << " [--video <video name>] [--model <model name>]"
-          " [--tracker <0=egde|1=keypoint|2=hybrid>] [--help] [-h]\n"
+          << " [--video <video name>]"
+          << " [--model <model name>]"
+          << " [--tracker <0=egde|1=keypoint|2=hybrid>]"
+          << " [--help] [-h]\n"
           << std::endl;
         return EXIT_SUCCESS;
       }
@@ -59,15 +68,14 @@ int main(int argc, char **argv)
     g.setFileName(opt_videoname);
     g.open(I);
 
-    vpDisplay *display = nullptr;
-#if defined(VISP_HAVE_X11)
-    display = new vpDisplayX;
-#elif defined(VISP_HAVE_GDI)
-    display = new vpDisplayGDI;
-#elif defined(HAVE_OPENCV_HIGHGUI)
-    display = new vpDisplayOpenCV;
+#if defined(VISP_HAVE_DISPLAY)
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+    display = vpDisplayFactory::createDisplay();
+#else
+    display = vpDisplayFactory::allocateDisplay();
 #endif
     display->init(I, 100, 100, "Model-based tracker");
+#endif
 
     //! [Constructor]
     vpMbGenericTracker tracker;
@@ -136,8 +144,6 @@ int main(int argc, char **argv)
     tracker.initClick(I, objectname + ".init", true);
     //! [Init]
 
-
-
     while (!g.end()) {
       g.acquire(I);
       vpDisplay::display(I);
@@ -155,18 +161,28 @@ int main(int argc, char **argv)
       vpDisplay::displayText(I, 10, 10, "A click to exit...", vpColor::red);
       vpDisplay::flush(I);
 
-      if (vpDisplay::getClick(I, false))
+      if (vpDisplay::getClick(I, false)) {
         break;
+      }
     }
     vpDisplay::getClick(I);
-    //! [Cleanup]
-    delete display;
-    //! [Cleanup]
   }
   catch (const vpException &e) {
     std::cout << "Catch a ViSP exception: " << e << std::endl;
+    //! [Cleanup]
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+    if (display != nullptr) {
+      delete display;
+    }
+#endif
+    //! [Cleanup]
     return EXIT_FAILURE;
   }
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+  if (display != nullptr) {
+    delete display;
+  }
+#endif
 #else
   (void)argc;
   (void)argv;

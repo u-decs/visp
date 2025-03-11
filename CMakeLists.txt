@@ -1,7 +1,7 @@
 #############################################################################
 #
 # ViSP, open source Visual Servoing Platform software.
-# Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2024 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
-cmake_minimum_required(VERSION 3.5) # needs to be before project() for policy CMP0025
+cmake_minimum_required(VERSION 3.10) # needs to be before project() for policy CMP0025
 
 # Detect if the toolchain is for Aldebaran naoqi
 if(CMAKE_TOOLCHAIN_FILE AND I_AM_A_ROBOT)
@@ -141,6 +141,13 @@ set(VISP_VERSION "${VISP_VERSION_MAJOR}.${VISP_VERSION_MINOR}.${VISP_VERSION_PAT
 set(VISP_SOVERSION "${VISP_VERSION_MAJOR}.${VISP_VERSION_MINOR}")
 # Package revision number
 set(VISP_REVISION "1")
+
+# Try to locate visp-images and, if it exists, its version
+vp_find_dataset(VISP_DATASET_FOUND VISP_DATASET_LOCATION
+                VISP_DATASET_VERSION
+                VISP_DATASET_VERSION_MAJOR
+                VISP_DATASET_VERSION_MINOR
+                VISP_DATASET_VERSION_PATCH)
 
 #-----------------------------------------------------------------------------
 # TO BE CHECKED BEFORE NEXT RELEASE
@@ -295,6 +302,7 @@ if(NOT IOS)
 
     # Alias variables to be consistent with previous detection method
     set(PYTHON3_FOUND ${Python3_FOUND})
+    set(PYTHON_DEFAULT_AVAILABLE TRUE)
     set(PYTHON3_EXECUTABLE ${Python3_EXECUTABLE})
     set(PYTHON_DEFAULT_EXECUTABLE ${PYTHON3_EXECUTABLE})
     set(PYTHON3INTERP_FOUND ${Python3_Interpreter_FOUND})
@@ -545,6 +553,8 @@ VP_OPTION(ENABLE_FULL_DOC      "" "" "Build doc with internal classes that are b
 VP_OPTION(ENABLE_VISP_NAMESPACE "" "" "Enable visp namespace" "" OFF)
 # Allow introduction of "explicit" keyword. By default disabled to keep compat with previous versions
 VP_OPTION(ENABLE_EXPLICIT_KEYWORD "" "" "Enable c++ explicit keyword" "" OFF)
+# Enable the vpImageTools::warp() methods
+VP_OPTION(ENABLE_IMAGE_TOOLS_WARP "" "" "Enable vpImageTools::warp() methods" "" ON)
 
 if(ENABLE_SOLUTION_FOLDERS)
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -929,11 +939,12 @@ if(DOXYGEN_FOUND)
   set(DOXYGEN_GENERATE_TEST_LIST "YES")
   set(DOXYGEN_QUIET "NO")
   set(DOXYGEN_INPUTS
-    "${VISP_SOURCE_DIR}/modules"
-    "${VISP_SOURCE_DIR}/example"
-    "${VISP_SOURCE_DIR}/tutorial"
+    "${VISP_SOURCE_DIR}/apps"
     "${VISP_SOURCE_DIR}/demo"
     "${VISP_SOURCE_DIR}/doc"
+    "${VISP_SOURCE_DIR}/example"
+    "${VISP_SOURCE_DIR}/modules"
+    "${VISP_SOURCE_DIR}/tutorial"
     "${VISP_BINARY_DIR}/doc"
     "${VISP_CONTRIB_MODULES_PATH}"
   )
@@ -984,6 +995,7 @@ include(cmake/VISPExtraTargets.cmake)
 include(cmake/OgreTools.cmake)
 if(USE_OGRE)
   vp_set_ogre_media()
+  set(VISP_HAVE_OGRE_VERSION "(${OGRE_VERSION_MAJOR}<<16 | ${OGRE_VERSION_MINOR}<<8 | ${OGRE_VERSION_PATCH})") # for vpConfig.h
 endif()
 
 #----------------------------------------------------------------------
@@ -1043,11 +1055,18 @@ if(BUILD_JAVA)
     include(cmake/android/ViSPDetectAndroidSDK.cmake)
   else()
     include(cmake/VISPDetectApacheAnt.cmake)
+    if(ANT_EXECUTABLE AND NOT OPENCV_JAVA_IGNORE_ANT)
+      vp_update(VISP_JAVA_SDK_BUILD_TYPE "ANT")
+    elseif(NOT ANDROID)
+      find_package(Java)
+      if(Java_FOUND)
+        include(UseJava)
+        vp_update(VISP_JAVA_SDK_BUILD_TYPE "JAVA")
+      endif()
+    endif()
     find_package(JNI)
   endif()
 endif()
-
-
 
 if(ANDROID AND ANDROID_EXECUTABLE AND ANT_EXECUTABLE AND (ANT_VERSION VERSION_GREATER 1.7) AND (ANDROID_TOOLS_Pkg_Revision GREATER 13))
   SET(CAN_BUILD_ANDROID_PROJECTS TRUE)
@@ -1214,25 +1233,9 @@ if(USE_LIBFREENECT AND USE_LIBUSB_1 AND USE_THREADS)
   endif()
 endif()
 
-# check OpenCV nonfree modules and version
+# OpenCV version
 if(USE_OPENCV)
   set(VISP_HAVE_OPENCV_VERSION "(${OpenCV_VERSION_MAJOR}<<16 | ${OpenCV_VERSION_MINOR}<<8 | ${OpenCV_VERSION_PATCH})") # for vpConfig.h
-  if(OpenCV_VERSION)
-    if(OpenCV_VERSION VERSION_LESS "2.4.0")
-      message(STATUS "opencv nonfree module found")
-      set(VISP_HAVE_OPENCV_NONFREE TRUE)  # for header vpConfig.h
-    elseif(OPENCV_NONFREE_FOUND) # OpenCV < 3.0.0
-      message(STATUS "opencv xfeatures2d module found")
-      set(VISP_HAVE_OPENCV_NONFREE TRUE)  # for header vpConfig.h
-    elseif(OPENCV_XFEATURES2D_FOUND) # OpenCV >= 3.0.0
-      set(VISP_HAVE_OPENCV_XFEATURES2D TRUE)  # for header vpConfig.h
-    else()
-      message(STATUS "opencv nonfree or xfeature2d module not found")
-    endif()
-  else()
-    message(STATUS "opencv nonfree not found")
-    set(VISP_HAVE_OPENCV_VERSION "(0)") # for vpConfig.h
-  endif()
 endif()
 
 # coin and gui
@@ -1452,12 +1455,8 @@ if(USE_JPEG)
     endif()
   endif()
 endif()
-if(USE_OIS)
-  vp_parse_header("${OIS_INCLUDE_DIR}/OISPrereqs.h" OIS_VERSION_LINES OIS_VERSION_MAJOR OIS_VERSION_MINOR OIS_VERSION_PATCH)
-  set(OIS_VERSION "${OIS_VERSION_MAJOR}.${OIS_VERSION_MINOR}.${OIS_VERSION_PATCH}")
-endif()
 if(USE_EIGEN3)
-  # Additionnal check to be sure that Eigen3 include dir os well detected
+  # Additional check to be sure that Eigen3 include dir os well detected
   if(NOT EXISTS ${EIGEN3_INCLUDE_DIR})
     message(WARNING "Eigen3 config file is detected in ${Eigen3_DIR}. Using ${Eigen3_DIR}/Eigen3Config.cmake doesn't allow to use a valid Eigen3 include dir: ${EIGEN3_INCLUDE_DIR}. Modify Eigen3_DIR to point to Eigen3Config.cmake file located in Eigen3 installation folder or turn USE_EIGEN3 OFF.")
   endif()
@@ -1479,7 +1478,7 @@ endif()
 #  System information
 # ----------------------------------------------------------------------------
 vp_system_information(NUMBER_OF_LOGICAL_CORES NUMBER_OF_PHYSICAL_CORES TOTAL_PHYSICAL_MEMORY OS_NAME OS_RELEASE
-                      OS_VERSION OS_PLATFORM PROCESSOR_NAME IS_64BIT HAS_FPU CPU_OPTIM)
+                      OS_VERSION OS_PLATFORM PROCESSOR_NAME PROCESSOR_DESCRIPTION IS_64BIT HAS_FPU CPU_OPTIM)
 
 # ----------------------------------------------------------------------------
 #  Autodetect if we are in a GIT repository
@@ -1575,9 +1574,21 @@ status("    OS release:"                                   "${OS_RELEASE}")
 status("    OS version:"                                   "${OS_VERSION}")
 status("    OS platform:"                                  "${OS_PLATFORM}")
 status("    CPU name:"                                     "${PROCESSOR_NAME}")
+status("    CPU description:"                              "${PROCESSOR_DESCRIPTION}")
 status("    Is the CPU 64-bit?"                            ${IS_64BIT} THEN "yes" ELSE "no")
 status("    Does the CPU have FPU?"                        ${HAS_FPU} THEN "yes" ELSE "no")
 status("    CPU optimization:"                             ${CPU_OPTIM})
+if(NOT ("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" LESS 3.20))
+# https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_BYTE_ORDER.html
+# https://github.com/libevent/libevent/pull/1349/files
+  if(CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+    status("    CPU endianness:"                 "big-endian")
+  elseif(CMAKE_CXX_BYTE_ORDER STREQUAL "LITTLE_ENDIAN")
+    status("    CPU endianness:"                 "little-endian")
+  else()
+    status("    CPU endianness:"                 "unknown")
+  endif()
+endif()
 
 # ========================== C/C++ options ==========================
 if(CMAKE_CXX_COMPILER_VERSION)
@@ -1694,10 +1705,12 @@ status("    Interpreter:"     PYTHON3INTERP_FOUND  THEN "${PYTHON3_EXECUTABLE} (
 
 if(BUILD_JAVA OR BUILD_visp_java)
   status("")
-  status("  Java:"            BUILD_FAT_JAVA_LIB  THEN "export all functions"                                      ELSE "")
-  status("    ant:"           ANT_EXECUTABLE      THEN "${ANT_EXECUTABLE} (ver ${ANT_VERSION})"                    ELSE "no")
+  status("  Java:"            BUILD_FAT_JAVA_LIB  THEN "export all functions"                    ELSE "")
+  status("    ant:"           ANT_EXECUTABLE      THEN "${ANT_EXECUTABLE} (ver ${ANT_VERSION})"  ELSE "no")
   if(NOT ANDROID)
-    status("    JNI:"         JNI_INCLUDE_DIRS    THEN "${JNI_INCLUDE_DIRS}"                                       ELSE "no")
+  status("    Java:"          Java_FOUND          THEN "yes (ver ${Java_VERSION})"                 ELSE "no")
+  status("    JNI:"           JNI_INCLUDE_DIRS    THEN "${JNI_INCLUDE_DIRS}"                       ELSE "no")
+  status("    Java wrappers:" HAVE_visp_java      THEN "yes (${VISP_JAVA_SDK_BUILD_TYPE})"         ELSE "no")
   endif()
 endif()
 
@@ -1802,8 +1815,14 @@ status("    Use PTU46:"              USE_PTU46        THEN "yes" ELSE "no")
 status("    Use Biclops PTU:"        USE_BICLOPS      THEN "yes" ELSE "no")
 status("    Use Flir PTU SDK:"       USE_FLIRPTUSDK   THEN "yes (ver ${FLIRPTUSDK_VERSION})" ELSE "no")
 status("    Use MAVSDK:"             USE_MAVSDK       THEN "yes (ver ${MAVSDK_VERSION})" ELSE "no")
-status("    Use Parrot ARSDK:"       USE_ARSDK        THEN "yes" ELSE "no")
-status("    \\-Use ffmpeg:"          USE_FFMPEG       THEN "yes" ELSE "no")
+status("    Use Parrot ARSDK:"       USE_ARSDK        THEN "yes (ver ${ARSDK_VERSION})" ELSE "no")
+status("    \\- Use ffmpeg:"         USE_FFMPEG       THEN "yes" ELSE "no")
+if(USE_FFMPEG)
+status("       \\- Use libavcodec:"  USE_FFMPEG     THEN "yes (ver ${FFMPEG_LIBAVCODEC_VERSION})" ELSE "no")
+status("       \\- Use libavformat:" USE_FFMPEG     THEN "yes (ver ${FFMPEG_LIBAVFORMAT_VERSION})" ELSE "no")
+status("       \\- Use libavutil:"   USE_FFMPEG     THEN "yes (ver ${FFMPEG_LIBAVUTIL_VERSION})" ELSE "no")
+status("       \\- Use libswscale:"  USE_FFMPEG     THEN "yes (ver ${FFMPEG_LIBSWSCALE_VERSION})" ELSE "no")
+endif()
 status("    Use Virtuose:"           USE_VIRTUOSE     THEN "yes" ELSE "no")
 status("    Use qbdevice (built-in):" WITH_QBDEVICE   THEN "yes (ver ${QBDEVICE_VERSION})" ELSE "no")
 status("    Use takktile2 (built-in):" WITH_TAKKTILE2 THEN "yes (ver ${TAKKTILE2_VERSION})" ELSE "no")
@@ -1896,19 +1915,41 @@ endif()
 status("")
 status("  Library dirs:")
 if(USE_EIGEN3)
-  status("    Eigen3 include dir:" "${Eigen3_DIR}")
+  status("    Eigen3 dir:" "${Eigen3_DIR}")
 endif()
 if(USE_MKL)
   status("    MKL include dir:" "${MKL_INCLUDE_DIRS}")
 endif()
 if(USE_OPENBLAS)
-  status("    OpenBLAS dir:" "${OpenBLAS_DIR}")
+  status("    OpenBLAS include dir:" "${OpenBLAS_INCLUDE_DIR}")
 endif()
 if(USE_OPENCV)
   status("    OpenCV dir:" "${OpenCV_DIR}")
 endif()
 if(USE_PCL)
   status("    PCL dir:" "${PCL_DIR}")
+endif()
+if(USE_PANDA3D)
+  if(Panda3D_DIR)
+    status("    Panda3D dir:" "${Panda3D_DIR}")
+  elseif($ENV{Panda3D_DIR})
+    status("    Panda3D dir:" "$ENV{Panda3D_DIR}")
+  else()
+    file(REAL_PATH "${Panda3D_INCLUDE_DIRS}/../.." Panda3D_DIR)
+    status("    Panda3D dir:" "${Panda3D_DIR}")
+  endif()
+endif()
+if(USE_YARP)
+  status("    Yarp dir:" "${YARP_DIR}")
+endif()
+if(USE_OGRE)
+  if(NOT ${OGRE_DIR} MATCHES "NOTFOUND")
+    status("    Ogre dir:" "${OGRE_DIR}")
+  else()
+    status("    Ogre inc dir:" "${OGRE_INCLUDE_DIR}")
+    status("    Ogre Main lib:" "${OGRE_LIBRARY_REL}")
+    status("    Ogre plugin dir:" "${OGRE_PLUGIN_DIR_REL}")
+  endif()
 endif()
 
 # ========================== auxiliary ==========================

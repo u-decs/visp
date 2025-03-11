@@ -2,20 +2,32 @@
 #include <iostream>
 
 #include <visp3/core/vpConfig.h>
-#include <visp3/core/vpImageConvert.h>
-#include <visp3/core/vpTime.h>
-#include <visp3/detection/vpDetectorFace.h>
-#include <visp3/gui/vpDisplayGDI.h>
-#include <visp3/gui/vpDisplayX.h>
-#include <visp3/sensor/vpV4l2Grabber.h>
 
-#if defined(HAVE_OPENCV_OBJDETECT) && defined(HAVE_OPENCV_HIGHGUI) && defined(HAVE_OPENCV_IMGPROC) \
-  && defined(HAVE_OPENCV_VIDEOIO) && defined(VISP_HAVE_THREADS)
+//! [Undef grabber]
+// Comment / uncomment following lines to use the specific 3rd party compatible with your camera
+// #undef VISP_HAVE_V4L2
+// #undef HAVE_OPENCV_HIGHGUI
+// #undef HAVE_OPENCV_VIDEOIO
+//! [Undef grabber]
+
+#if defined(VISP_HAVE_THREADS) && defined(HAVE_OPENCV_IMGPROC) \
+  && (((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_OBJDETECT)) || ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_XOBJDETECT))) \
+  && (defined(VISP_HAVE_V4L2) || (((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))))
 
 #include <thread>
 #include <mutex>
 
-#include <opencv2/videoio.hpp>
+#include <visp3/core/vpImageConvert.h>
+#include <visp3/core/vpTime.h>
+#include <visp3/detection/vpDetectorFace.h>
+#include <visp3/gui/vpDisplayFactory.h>
+#include <visp3/sensor/vpV4l2Grabber.h>
+
+#if (VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)
+#include <opencv2/highgui/highgui.hpp> // for cv::VideoCapture
+#elif (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO)
+#include <opencv2/videoio/videoio.hpp> // for cv::VideoCapture
+#endif
 
 #ifdef ENABLE_VISP_NAMESPACE
 using namespace VISP_NAMESPACE_NAME;
@@ -33,7 +45,7 @@ void captureFunction(cv::VideoCapture &cap, std::mutex &mutex_capture, cv::Mat &
   // If the image is larger than 640 by 480, we subsample
 #if defined(VISP_HAVE_V4L2)
   vpImage<unsigned char> frame_;
-#elif defined(HAVE_OPENCV_VIDEOIO)
+#elif ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
   cv::Mat frame_;
 #endif
   bool stop_capture_ = false;
@@ -63,7 +75,7 @@ void captureFunction(cv::VideoCapture &cap, std::mutex &mutex_capture, cv::Mat &
 
 #if defined(VISP_HAVE_V4L2)
 void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, vpImage<unsigned char> &frame, t_CaptureState &capture_state, vpRect &face_bbox, bool &face_available)
-#elif defined(HAVE_OPENCV_VIDEOIO)
+#elif ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
 void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat &frame, t_CaptureState &capture_state, vpRect &face_bbox, bool &face_available)
 #endif
 {
@@ -73,10 +85,10 @@ void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat 
   bool display_initialized_ = false;
   bool face_available_ = false;
   vpRect face_bbox_;
-#if defined(VISP_HAVE_X11)
-  vpDisplayX *d_ = nullptr;
-#elif defined(VISP_HAVE_GDI)
-  vpDisplayGDI *d_ = nullptr;
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+  std::shared_ptr<vpDisplay> display;
+#else
+  vpDisplay *display = nullptr;
 #endif
 
   do {
@@ -92,7 +104,7 @@ void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat 
         std::lock_guard<std::mutex> lock(mutex_capture);
 #if defined(VISP_HAVE_V4L2)
         I_ = frame;
-#elif defined(VISP_HAVE_OPENCV)
+#elif ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
         vpImageConvert::convert(frame, I_);
 #endif
       }
@@ -100,11 +112,12 @@ void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat 
       // Check if we need to initialize the display with the first frame
       if (!display_initialized_) {
         // Initialize the display
-#if defined(VISP_HAVE_X11)
-        d_ = new vpDisplayX(I_);
-        display_initialized_ = true;
-#elif defined(VISP_HAVE_GDI)
-        d_ = new vpDisplayGDI(I_);
+#if defined(VISP_HAVE_DISPLAY)
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+        display = vpDisplayFactory::createDisplay(I_);
+#else
+        display = vpDisplayFactory::allocateDisplay(I_);
+#endif
         display_initialized_ = true;
 #endif
       }
@@ -140,8 +153,10 @@ void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat 
     }
   } while (capture_state_ != capture_stopped);
 
-#if defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI)
-  delete d_;
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+  if (display != nullptr) {
+    delete display;
+  }
 #endif
 
   std::cout << "End of display thread" << std::endl;
@@ -150,7 +165,7 @@ void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat 
 //! [face-detection-threaded detectionFunction]
 #if defined(VISP_HAVE_V4L2)
 void detectionFunction(std::mutex &mutex_capture, std::mutex &mutex_face, vpImage<unsigned char> &frame, t_CaptureState &capture_state, vpRect &face_bbox, std::string &face_cascade_name, bool &face_available)
-#elif defined(HAVE_OPENCV_VIDEOIO)
+#elif ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
 void detectionFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat &frame, t_CaptureState &capture_state, vpRect &face_bbox, std::string &face_cascade_name, bool &face_available)
 #endif
 {
@@ -160,7 +175,7 @@ void detectionFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Ma
   t_CaptureState capture_state_;
 #if defined(VISP_HAVE_V4L2)
   vpImage<unsigned char> frame_;
-#elif defined(VISP_HAVE_OPENCV)
+#elif ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
   cv::Mat frame_;
 #endif
   do {
@@ -200,17 +215,22 @@ int main(int argc, const char *argv[])
   unsigned int opt_scale = 2; // Default value is 2 in the constructor. Turn
   // it to 1 to avoid subsampling
 
-  for (int i = 0; i < argc; i++) {
-    if (std::string(argv[i]) == "--haar")
-      opt_face_cascade_name = std::string(argv[i + 1]);
-    else if (std::string(argv[i]) == "--device")
-      opt_device = (unsigned int)atoi(argv[i + 1]);
-    else if (std::string(argv[i]) == "--scale")
-      opt_scale = (unsigned int)atoi(argv[i + 1]);
-    else if (std::string(argv[i]) == "--help") {
+  for (int i = 1; i < argc; i++) {
+    if (std::string(argv[i]) == "--haar" && i + 1 < argc) {
+      opt_face_cascade_name = std::string(argv[++i]);
+    }
+    else if (std::string(argv[i]) == "--device" && i + 1 < argc) {
+      opt_device = (unsigned int)atoi(argv[++i]);
+    }
+    else if (std::string(argv[i]) == "--scale" && i + 1 < argc) {
+      opt_scale = (unsigned int)atoi(argv[++i]);
+    }
+    else if ((std::string(argv[i]) == "--help") || (std::string(argv[i]) == "-h")) {
       std::cout << "Usage: " << argv[0]
-        << " [--haar <haarcascade xml filename>] [--device <camera "
-        "device>] [--scale <subsampling factor>] [--help]"
+        << " [--haar <haarcascade xml filename>]"
+        << " [--device <camera device>]"
+        << " [--scale <subsampling factor>]"
+        << " [--help] [-h]"
         << std::endl;
       return EXIT_SUCCESS;
     }
@@ -224,7 +244,7 @@ int main(int argc, const char *argv[])
   device << "/dev/video" << opt_device;
   cap.setDevice(device.str());
   cap.setScale(opt_scale);
-#elif defined(HAVE_OPENCV_VIDEOIO)
+#elif ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
   cv::Mat frame;
   cv::VideoCapture cap;
   cap.open(opt_device);
@@ -266,13 +286,25 @@ int main(int argc, const char *argv[])
 #else
 int main()
 {
-#ifndef VISP_HAVE_OPENCV
-  std::cout << "You should install OpenCV to make this example working..." << std::endl;
-#elif !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-  std::cout << "You should enable pthread usage and rebuild ViSP..." << std::endl;
-#else
-  std::cout << "Multi-threading seems not supported on this platform" << std::endl;
+#if !defined(VISP_HAVE_THREADS)
+  std::cout << "This tutorial needs std::threads that is missing." << std::endl;
 #endif
+#if !defined(HAVE_OPENCV_HIGHGUI)
+  std::cout << "This tutorial needs OpenCV highgui module that is missing." << std::endl;
+#endif
+#if !defined(HAVE_OPENCV_VIDEOIO)
+  std::cout << "This tutorial needs OpenCV videoio module that is missing." << std::endl;
+#endif
+#if !defined(HAVE_OPENCV_IMGPROC)
+  std::cout << "This tutorial needs OpenCV imgproc module that is missing." << std::endl;
+#endif
+#if (VISP_HAVE_OPENCV_VERSION < 0x050000) && !defined(HAVE_OPENCV_OBJDETECT)
+  std::cout << "This tutorial needs OpenCV objdetect module that is missing." << std::endl;
+#endif
+#if ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && !defined(HAVE_OPENCV_XOBJDETECT))
+  std::cout << "This tutorial needs OpenCV xobjdetect module that is missing." << std::endl;
+#endif
+
   return EXIT_SUCCESS;
 }
 

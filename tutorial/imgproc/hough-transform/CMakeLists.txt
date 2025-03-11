@@ -1,6 +1,6 @@
-project(tutorial-hough)
+cmake_minimum_required(VERSION 3.10)
 
-cmake_minimum_required(VERSION 3.5)
+project(tutorial-hough)
 
 find_package(VISP REQUIRED visp_core visp_gui visp_imgproc visp_io)
 

@@ -1,9 +1,7 @@
 /*! \example tutorial-mb-hybrid-tracker.cpp */
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpIoTools.h>
-#include <visp3/gui/vpDisplayGDI.h>
-#include <visp3/gui/vpDisplayOpenCV.h>
-#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayFactory.h>
 #include <visp3/io/vpImageIo.h>
 #include <visp3/io/vpVideoReader.h>
 #include <visp3/mbt/vpMbEdgeKltTracker.h>
@@ -15,12 +13,19 @@ int main(int argc, char **argv)
   using namespace VISP_NAMESPACE_NAME;
 #endif
 
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+  std::shared_ptr<vpDisplay> display;
+#else
+  vpDisplay *display = nullptr;
+#endif
+
   try {
     std::string videoname = "teabox.mp4";
 
-    for (int i = 0; i < argc; i++) {
-      if (std::string(argv[i]) == "--name")
-        videoname = std::string(argv[i + 1]);
+    for (int i = 1; i < argc; i++) {
+      if (std::string(argv[i]) == "--name" && i + 1 < argc) {
+        videoname = std::string(argv[++i]);
+      }
       else if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h") {
         std::cout << "\nUsage: " << argv[0] << " [--name <video name>] [--help] [-h]\n" << std::endl;
         return EXIT_SUCCESS;
@@ -46,12 +51,12 @@ int main(int argc, char **argv)
     g.setFileName(videoname);
     g.open(I);
 
-#if defined(VISP_HAVE_X11)
-    vpDisplayX display(I, 100, 100, "Model-based hybrid tracker");
-#elif defined(VISP_HAVE_GDI)
-    vpDisplayGDI display(I, 100, 100, "Model-based hybrid tracker");
-#elif defined(HAVE_OPENCV_HIGHGUI)
-    vpDisplayOpenCV display(I, 100, 100, "Model-based hybrid tracker");
+#if defined(VISP_HAVE_DISPLAY)
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+    display = vpDisplayFactory::createDisplay(I, 100, 100, "Model-based hybrid tracker");
+#else
+    display = vpDisplayFactory::allocateDisplay(I, 100, 100, "Model-based hybrid tracker");
+#endif
 #else
     std::cout << "No image viewer is available..." << std::endl;
 #endif
@@ -121,6 +126,11 @@ int main(int argc, char **argv)
 #ifdef VISP_HAVE_OGRE
   catch (Ogre::Exception &e) {
     std::cout << "Catch an Ogre exception: " << e.getDescription() << std::endl;
+  }
+#endif
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+  if (display != nullptr) {
+    delete display;
   }
 #endif
 #else

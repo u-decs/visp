@@ -1,9 +1,9 @@
-                               ViSP
-                     Visual Servoing Platform
-                     Resume of the change log
+                                                        ViSP
+                                              Visual Servoing Platform
+                                              Resume of the change log
 
-     Copyright (C) 2005 - 2023 by Inria. All rights reserved.
-                      https://visp.inria.fr
+                              Copyright (C) 2005 - 2025 by Inria. All rights reserved.
+                                                https://visp.inria.fr
 
 ViSP 3.x.x (Version in development)
   - Contributors:
@@ -39,13 +39,21 @@ ViSP 3.x.x (Version in development)
       extract the corresponding point cloud
     . New scene renderer based on Panda3D. See inheritance diagram for vpPanda3DBaseRenderer class and corresponding
       tutorial
+    . vpHandEyeCalibration class dedicated to hand-eye calibration allows to consider eye-in-hand and eye-to-hand
+      configurations
+    . New module named visp_rbt for render-based tracker (RBT), which contains a new model-based tracker based on
+      object rendering using Panda3D 3rdparty. This tracker is a major evolution of our historic MBT. It can handle
+      complex cad models in .obj or .bam format
     . New docker image for Ubuntu 24.04 in docker folder
     . Update apriltag 3rdparty to 3.4.2 release
     . Update tinyexr 3rdparty to 1.0.9 release
     . Update stb_image 3rdparty to 2.30 version
-    . Update Catch2 3rdparty to 3.7.1 version
+    . Update Catch2 3rdparty to 3.8.0 version
     . Add compatibility with Yolo v11 in vpDetectorDNNOpenCV a wrapper over the OpenCV DNN module that allows
       to detect objects
+    . Introduce compat with Ogre 1.12.0 version
+    . Compat with mavsdk 3.0.0
+    . Introduce material to build and install ViSP from source with Pixi
   - Applications
     . Migrate eye-to-hand tutorials in apps
   - Tutorials
@@ -74,6 +82,14 @@ ViSP 3.x.x (Version in development)
       https://visp-doc.inria.fr/doxygen/visp-daily/tutorial-pf.html
     . New tutorial: Using Particle Filter to model a wire using polynomial interpolation
       https://visp-doc.inria.fr/doxygen/visp-daily/tutorial-pf-curve-fitting.html
+    . New tutorial: Rendering a 3D scene with Ogre
+      https://visp-doc.inria.fr/doxygen/visp-daily/tutorial-ogre.html
+    . New tutorial: Camera eye-to-hand extrinsic calibration
+      https://visp-doc.inria.fr/doxygen/visp-daily/tutorial-calibration-extrinsic-eye-to-hand.html
+    . New tutorial: Eye-to-hand IBVS with Panda 7-dof robot from Franka Emika
+      https://visp-doc.inria.fr/doxygen/visp-daily/tutorial-franka-ibvs-eth.html
+    . New tutorial: Multi-platform (OSX, Windows or Linux) installation from source with Pixi
+      https://visp-doc.inria.fr/doxygen/visp-daily/tutorial-install-pixi.html
   - Bug fixed
     . [#1251] Bug in vpDisplay::displayFrame()
     . [#1270] Build issue around std::clamp and optional header which are not found with cxx17
@@ -85,14 +101,28 @@ ViSP 3.x.x (Version in development)
     . [#1296] Unable to parse camera parameters with vpXmlParserCamera::parse() when camera name is empty
     . [#1307] Cannot set cxx standard when configuring for Visual Studio
     . [#1320] Broken links in the documentation
-    . [#1337] The pose of the automatic datageneration pipeline from blenderproc seems wrong
+    . [#1337] The pose of the automatic data generation pipeline from blenderproc seems wrong
     . [#1341] SVD computation fails with Lapack when m < n
     . [#1370] encountered compilation errors while building the ViSP library
+    . [#1404] Compilation error when no GUI library is available
     . [#1424] Unable to detect Yarp 3.9.0
     . [#1485] Build issue around nlohmann_json usage with VTK 9.2.0 or more recent version used as an embedded
               3rdparty by PCL
+    . [#1487] Segfault with vpCannyEdgeDetection with a certain image
     . [#1494] Memory management issue in vpArray2D::resize()
     . [#1495] vpMeLine is unable to seek extremities
+    . [#1519] Dataset not detected when tests are disabled
+    . [#1521] Build issues with OpenCV 5.0.0
+    . [#1541] servoUniversalRobotsPBVS.cpp:238:8: error: ‘class vpFeatureThetaU’ has no member
+              named ‘buibuildFromld’; did you mean ‘buildFrom’? 238 | tu.buibuildFromld(cdMc)
+    . [#1546] OIS 3rdparty not detected during CMake configuration
+    . [#1547] Build issue with Ogre 1.12.0 or more recent versions
+    . [#1552] Unabled to use SIFT feature with opencv 4.5.4
+    . [#1562] Fix segfault in vpFont
+    . [#1523] MAVSDK v2 and v3 compatibility
+    . [#1579] Unable to build vpRobotBebop2.cpp with ffmpeg (libavcodec >= 60)
+    . [#1585] ViSP images dataset is not found when installed from debian package
+    . [#1595] Unable to find dataset images when dataset is installed after ViSP is built
 ----------------------------------------------
 ViSP 3.6.0 (released September 22, 2023)
   - Contributors:
@@ -309,7 +339,7 @@ ViSP 3.4.0 (released February 26, 2021)
     . [#801] Build issue with visp_java
     . [#803] Segfault with MBT and when a circle disappears
     . [#806] Error running the Java sample with intel-mkl 2020.2.254-1
-    . [#808] vpVirtuose.cpp doen't build with Visual 2019 (vc16)
+    . [#808] vpVirtuose.cpp doesn't build with Visual 2019 (vc16)
     . [#812] Online doc formula rendering issue with Ghostscript on OSX
     . [#817] vpIoTools::getFileExtension prints "Debug sepIndex: 0" to std::cout
     . [#818] Model-based tracking issue using RGBD-data on Windows
@@ -445,7 +475,7 @@ ViSP 3.2.0 (released January 23, 2019)
       small wrapper over the OpenCV DNN module as much as possible light and simple.
       vpDetectorDNN is specialized to handle object detection tasks and provide a
       "convenient" way to have the detection bounding boxes.
-    . Improve eye to hand calibration
+    . Improve eye-to-hand calibration
     . Improve PnP pose estimation
     . Compat with OpenCV 4
     . Compat with Fedora 29

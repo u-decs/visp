@@ -1,7 +1,7 @@
 #############################################################################
 #
 # ViSP, open source Visual Servoing Platform software.
-# Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2024 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #
 #############################################################################
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 project(ViSP-apps)
 
@@ -60,4 +60,4 @@ if(MSVC)
   endif()
 endif()
 
-visp_add_subdirectory(calibration REQUIRED_DEPS visp_core visp_vision visp_io)
+visp_add_subdirectory(calibration REQUIRED_DEPS visp_core visp_gui visp_io visp_robot visp_sensor visp_vision)

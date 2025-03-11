@@ -61,6 +61,8 @@ public:
 
   inline vpUKSigmaDrawerAbstract(const unsigned int &n) : m_n(n) { }
 
+  virtual ~vpUKSigmaDrawerAbstract() = default;
+
   /**
    * \brief Draw the sigma points according to the current mean and covariance of the state
    * of the Unscented Kalman filter.
@@ -72,7 +74,7 @@ public:
   virtual std::vector<vpColVector> drawSigmaPoints(const vpColVector &mean, const vpMatrix &covariance) = 0;
 
   /**
-   * \brief Computed the weigths that correspond to the sigma poitns that have been drawn.
+   * \brief Computed the weights that correspond to the sigma points that have been drawn.
    *
    * \return vpSigmaPointsWeights The weights that correspond to the sigma points.
    */

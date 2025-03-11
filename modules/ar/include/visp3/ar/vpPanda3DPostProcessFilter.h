@@ -37,6 +37,7 @@
 #include <visp3/ar/vpPanda3DBaseRenderer.h>
 #include "cardMaker.h"
 #include "orthographicLens.h"
+#include "frameBufferProperties.h"
 
 BEGIN_VISP_NAMESPACE
 /**
@@ -69,7 +70,7 @@ public:
     return false;
   }
 
-  GraphicsOutput *getMainOutputBuffer() VP_OVERRIDE { return (GraphicsOutput *)m_buffer; }
+  PointerTo<GraphicsOutput> getMainOutputBuffer() VP_OVERRIDE { return m_buffer; }
 
   void afterFrameRendered() VP_OVERRIDE
   {
@@ -99,8 +100,10 @@ protected:
   PointerTo<Texture> m_texture;
   PointerTo<GraphicsOutput> m_buffer;
 
-  static const char *FILTER_VERTEX_SHADER;
+  static const std::string FILTER_VERTEX_SHADER;
 };
+
 END_VISP_NAMESPACE
+
 #endif
 #endif

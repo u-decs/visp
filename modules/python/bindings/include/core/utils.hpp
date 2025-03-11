@@ -46,6 +46,9 @@ namespace py = pybind11;
 template<typename Item>
 using np_array_cf = py::array_t<Item, py::array::c_style | py::array::forcecast>;
 
+template<typename Item>
+using np_array_c = py::array_t<Item, py::array::c_style>;
+
 /*
  * Create a buffer info for a row major array
  */
@@ -99,6 +102,22 @@ void verify_array_shape_and_dims(np_array_cf<Item> np_array, unsigned dims, cons
     throw std::runtime_error(ss.str());
   }
 }
+
+template<typename Item>
+void verify_array_shape_and_dims(np_array_c<Item> np_array, unsigned dims, const char *class_name)
+{
+  py::buffer_info buffer = np_array.request();
+  std::vector<py::ssize_t> shape = buffer.shape;
+  if (shape.size() != dims) {
+    std::stringstream ss;
+    ss << "Tried to instanciate " << class_name
+      << " that expects a " << dims << "D array but got a numpy array of shape "
+      << shape_to_string(shape);
+
+    throw std::runtime_error(ss.str());
+  }
+}
+
 template<typename Item>
 void verify_array_shape_and_dims(np_array_cf<Item> np_array, std::vector<py::ssize_t> expected_dims, const char *class_name)
 {
@@ -134,5 +153,59 @@ void copy_data_from_np(np_array_cf<Item> src, Item *dest)
   std::memcpy(dest, data, elements * sizeof(Item));
 
 }
+
+std::tuple<int, int, int, int> solveSliceIndices(py::slice slice, unsigned int size)
+{
+
+  py::handle start = slice.attr("start"), end = slice.attr("stop"), step = slice.attr("step");
+
+  int startI = 0, endI = size, stepI = 1;
+  if (!start.is(py::none())) {
+    startI = py::cast<int>(start);
+    if (startI < 0) {
+      startI = size + startI;
+    }
+
+    if (startI >= static_cast<int>(size)) {
+      throw std::runtime_error("Invalid slice indexing out of array");
+    }
+  }
+
+  if (!end.is(py::none())) {
+    endI = py::cast<int>(end);
+    if (endI < 0) {
+      endI = size + endI;
+    }
+
+    if (endI > static_cast<int>(size)) {
+      throw std::runtime_error("Invalid slice indexing out of array");
+    }
+  }
+
+  if (!step.is(py::none())) {
+    stepI = py::cast<int>(step);
+    if (stepI <= 0) {
+      throw std::runtime_error("Slice indexing: negative or zero step not supported!");
+    }
+  }
+
+  if (endI < startI) {
+    throw std::runtime_error("Slice indexing: end index is lower than start index");
+  }
+
+  int count;
+
+  if (stepI > endI - startI) {
+    count = 1;
+  }
+  else {
+    int t = (endI - startI) / stepI;
+    int endS = startI + t * stepI;
+    count = (endS == endI) ? t : t + 1;
+  }
+
+  return std::make_tuple(startI, endI, stepI, count);
+}
+
 
 #endif

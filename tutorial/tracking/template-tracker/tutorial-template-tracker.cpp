@@ -1,8 +1,6 @@
 /*! \example tutorial-template-tracker.cpp */
 #include <visp3/core/vpConfig.h>
-#include <visp3/gui/vpDisplayGDI.h>
-#include <visp3/gui/vpDisplayOpenCV.h>
-#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayFactory.h>
 #include <visp3/io/vpVideoReader.h>
 //! [Include]
 #include <visp3/tt/vpTemplateTrackerSSDInverseCompositional.h>
@@ -18,13 +16,17 @@ int main(int argc, char **argv)
   std::string opt_videoname = "bruegel.mp4";
   unsigned int opt_subsample = 1;
 
-  for (int i = 0; i < argc; i++) {
-    if (std::string(argv[i]) == "--videoname")
-      opt_videoname = std::string(argv[i + 1]);
-    else if (std::string(argv[i]) == "--subsample")
-      opt_subsample = static_cast<unsigned int>(std::atoi(argv[i + 1]));
+  for (int i = 1; i < argc; i++) {
+    if (std::string(argv[i]) == "--videoname" && i + 1 < argc) {
+      opt_videoname = std::string(argv[++i]);
+    }
+    else if (std::string(argv[i]) == "--subsample" && i + 1 < argc) {
+      opt_subsample = static_cast<unsigned int>(std::atoi(argv[++i]));
+    }
     else if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h") {
-      std::cout << "\nUsage: " << argv[0] << " [--videoname <video name>] [--subsample <scale factor>] [--help] [-h]\n"
+      std::cout << "\nUsage: " << argv[0]
+        << " [--videoname <video name>]"
+        << " [--subsample <scale factor>] [--help] [-h]\n"
         << std::endl;
       return EXIT_SUCCESS;
     }
@@ -39,17 +41,15 @@ int main(int argc, char **argv)
   g.open(Iacq);
   Iacq.subsample(opt_subsample, opt_subsample, I);
 
-#if defined(VISP_HAVE_X11)
-  vpDisplayX display;
-#elif defined(VISP_HAVE_GDI)
-  vpDisplayGDI display;
-#elif defined(HAVE_OPENCV_HIGHGUI)
-  vpDisplayOpenCV display;
+#if defined(VISP_HAVE_DISPLAY)
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+  std::shared_ptr<vpDisplay> display = vpDisplayFactory::createDisplay(I, 100, 100, "Template tracker", vpDisplay::SCALE_AUTO);
+#else
+  vpDisplay *display = vpDisplayFactory::allocateDisplay(I, 100, 100, "Template tracker", vpDisplay::SCALE_AUTO);
+#endif
 #else
   std::cout << "No image viewer is available..." << std::endl;
 #endif
-  display.setDownScalingFactor(vpDisplay::SCALE_AUTO);
-  display.init(I, 100, 100, "Template tracker");
   vpDisplay::display(I);
   vpDisplay::flush(I);
 
@@ -95,8 +95,14 @@ int main(int argc, char **argv)
     vpDisplay::flush(I);
     if (!g.isVideoFormat()) {
       vpTime::wait(t, 40);
-}
-}
+    }
+  }
+
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11) && defined(VISP_HAVE_DISPLAY)
+  if (display != nullptr) {
+    delete display;
+  }
+#endif
 #else
   (void)argc;
   (void)argv;

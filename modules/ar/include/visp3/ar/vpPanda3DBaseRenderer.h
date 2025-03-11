@@ -38,8 +38,13 @@
 #include <visp3/core/vpCameraParameters.h>
 #include <visp3/ar/vpPanda3DRenderParameters.h>
 
-#include <pandaFramework.h>
-#include <pandaSystem.h>
+#include <windowFramework.h>
+#include <graphicsOutput.h>
+
+#include <nodePath.h>
+#include <pointerTo.h>
+#include <camera.h>
+
 
 BEGIN_VISP_NAMESPACE
 /**
@@ -58,12 +63,12 @@ class VISP_EXPORT vpPanda3DBaseRenderer
 {
 public:
   vpPanda3DBaseRenderer(const std::string &rendererName)
-    : m_name(rendererName), m_renderOrder(-100), m_framework(nullptr), m_window(nullptr), m_camera(nullptr)
+    : m_name(rendererName), m_renderOrder(-100), m_window(nullptr), m_camera(nullptr), m_isWindowOwner(false)
   {
     setVerticalSyncEnabled(false);
   }
 
-  virtual ~vpPanda3DBaseRenderer() = default;
+  virtual ~vpPanda3DBaseRenderer();
 
   /**
    * @brief Initialize the whole Panda3D framework. Create a new PandaFramework object and a new window.
@@ -71,18 +76,12 @@ public:
    * Will also perform the renderer setup (scene, camera and render targets)
    */
   virtual void initFramework();
-  virtual void initFromParent(std::shared_ptr<PandaFramework> framework, PointerTo<WindowFramework> window);
+  virtual void initFromParent(PointerTo<WindowFramework> window);
   virtual void initFromParent(const vpPanda3DBaseRenderer &renderer);
 
   virtual void beforeFrameRendered() { }
   virtual void renderFrame();
-  virtual void afterFrameRendered()
-  {
-    GraphicsOutput *mainBuffer = getMainOutputBuffer();
-    if (mainBuffer != nullptr) {
-      m_framework->get_graphics_engine()->extract_texture_data(mainBuffer->get_texture(), mainBuffer->get_gsg());
-    }
-  }
+  virtual void afterFrameRendered();
 
   /**
    * @brief Get the name of the renderer
@@ -122,14 +121,7 @@ public:
    */
   int getRenderOrder() const { return m_renderOrder; }
 
-  void setRenderOrder(int order)
-  {
-    int previousOrder = m_renderOrder;
-    m_renderOrder = order;
-    for (GraphicsOutput *buffer: m_buffers) {
-      buffer->set_sort(buffer->get_sort() + (order - previousOrder));
-    }
-  }
+  void setRenderOrder(int order);
 
   /**
    * @brief Set the camera's pose.
@@ -238,7 +230,7 @@ public:
 
   void printStructure();
 
-  virtual GraphicsOutput *getMainOutputBuffer() { return nullptr; }
+  virtual PointerTo<GraphicsOutput> getMainOutputBuffer() { return nullptr; }
 
   virtual void enableSharedDepthBuffer(vpPanda3DBaseRenderer &sourceBuffer);
 
@@ -270,13 +262,13 @@ protected:
 protected:
   std::string m_name; //! name of the renderer
   int m_renderOrder; //! Rendering priority for this renderer and its buffers. A lower value will be rendered first. Should be used when calling make_output in setupRenderTarget()
-  std::shared_ptr<PandaFramework> m_framework; //! Pointer to the active panda framework
   PointerTo<WindowFramework> m_window; //! Pointer to owning window, which can create buffers etc. It is not necessarily visible.
   vpPanda3DRenderParameters m_renderParameters; //! Rendering parameters
   NodePath m_renderRoot; //! Node containing all the objects and the camera for this renderer
   PointerTo<Camera> m_camera;
   NodePath m_cameraPath; //! NodePath of the camera
-  std::vector<GraphicsOutput *> m_buffers; //! Set of buffers that this renderer uses. This storage contains weak refs to those buffers and should not deallocate them.
+  std::vector<PointerTo<GraphicsOutput>> m_buffers; //! Set of buffers that this renderer uses. This storage contains weak refs to those buffers and should not deallocate them.
+  bool m_isWindowOwner; // Whether this panda subrenderer is the "owner" of the window framework and should close all associated windows when getting destroyed
 };
 
 END_VISP_NAMESPACE

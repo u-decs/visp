@@ -1,7 +1,7 @@
 #############################################################################
 #
 # ViSP, open source Visual Servoing Platform software.
-# Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2024 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@
 
 # Add optional 3rd parties
 set(opt_incs "")
+set(opt_system_incs "")
 set(opt_libs "")
 set(opt_libs_private "")
 
@@ -68,7 +69,8 @@ if(USE_OPENCV)
     set(OpenCV_REQUIRED_LIB_COMPONENTS ${OpenCV_LIB_COMPONENTS})
     vp_list_filterout(OpenCV_REQUIRED_LIB_COMPONENTS "opencv_*")
     # We import only required OpenCV libraries
-    list(APPEND OpenCV_REQUIRED_LIB_COMPONENTS "opencv_legacy" "opencv_xfeatures2d" "opencv_nonfree" "opencv_flann")
+    # Note: opencv_contrib is required with OpenCV 2.4.9.1 coming with Ubuntu 16.04
+    list(APPEND OpenCV_REQUIRED_LIB_COMPONENTS "opencv_legacy" "opencv_xfeatures2d" "opencv_features" "opencv_3d" "opencv_calib" "opencv_calib3d" "opencv_nonfree" "opencv_flann" "opencv_contrib")
 
     foreach(component_ ${OpenCV_REQUIRED_LIB_COMPONENTS})
       string(TOUPPER "${component_}" component_UP)
@@ -146,13 +148,13 @@ if(USE_OPENCV)
 #    list(APPEND opt_libs ${OpenCV_LIBS})
   endif()
   if(OpenCV_INCLUDE_DIRS)
-    list(APPEND opt_incs ${OpenCV_INCLUDE_DIRS})
+    list(APPEND opt_system_incs ${OpenCV_INCLUDE_DIRS})
   endif()
 endif(USE_OPENCV)
 
 vp_add_module(vision visp_core OPTIONAL visp_visual_features visp_io PRIVATE_OPTIONAL ${opt_libs_private})
 vp_glob_module_sources()
-vp_module_include_directories(${opt_incs})
+vp_module_include_directories(${opt_incs} SYSTEM ${opt_system_incs})
 vp_create_module(${opt_libs})
 
 set(opt_test_incs "")

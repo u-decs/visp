@@ -34,7 +34,7 @@
 #############################################################################
 
 import visp
-from visp.core import ArrayDouble2D, RotationMatrix, Matrix, HomogeneousMatrix, PoseVector
+from visp.core import ArrayDouble2D, RotationMatrix, Matrix, HomogeneousMatrix, PoseVector, ColVector, RowVector
 
 import numpy as np
 import pytest
@@ -48,6 +48,31 @@ def test_np_array_modifies_vp_array():
   assert np.all(array_np == 1.0)
   array_np[0:2, 0:2] = 2
   assert array.getMinValue() == 1 and array.getMaxValue() == 2
+
+def test_visp_view_of_np_array():
+  a = np.zeros((5, 5))
+  with pytest.raises(RuntimeError):
+    ColVector.view(a)
+  with pytest.raises(RuntimeError):
+    RowVector.view(a)
+  m = Matrix.view(a)
+  m[0, 0] = 1
+  assert a[0, 0] == 1
+  assert m.getRows() == a.shape[0] and m.getCols() == a.shape[1]
+  a = np.zeros(10)
+  with pytest.raises(RuntimeError):
+    Matrix.view(a)
+
+  v = ColVector.view(a)
+  v[0] = 1
+  assert a[0] == 1
+  assert v.getRows() == a.shape[0]
+
+  a = np.zeros(10)
+  v = RowVector.view(a)
+  v[0] = 1
+  assert a[0] == 1
+  assert v.getCols() == a.shape[0]
 
 def fn_test_not_writable_2d(R):
   R_np = np.array(R, copy=False)
@@ -84,7 +109,6 @@ def test_numpy_constructor_interpreted_as_1d_vector():
     a = ArrayDouble2D(n_1d) # R = 0, c = 0
   ar = ArrayDouble2D(n_1d, r=len(n_1d))
   ac = ArrayDouble2D(n_1d, c=len(n_1d))
-
 
 def test_numpy_conversion_and_back():
   a = ArrayDouble2D(10, 10, 2.0)
@@ -131,3 +155,86 @@ def test_index_tuple_not_copy():
   for i in range(2):
     for j in range(2):
       assert a[i, j] == 0.0
+
+def test_setitem_2D_array():
+  h,w = 50, 50
+  a = ArrayDouble2D(h, w, 5)
+
+  # 2D indexing (basic)
+  a[0, 0] = 5
+  assert a[0, 0] == 5
+  a[0, 0] = 20
+  assert a[0, 0] == 20
+
+  # Replace a row
+  a[1] = 20
+  for i in range(a.getCols()):
+    assert a[1, i] == 20
+
+
+  # Replace a row
+  a[:] = 20
+  for i in range(a.getRows()):
+    for j in range(a.getCols()):
+      assert a[i, j] == 20
+
+  # Replace rows with a slice
+  a[:] = 5
+  a[::2] = 20
+  for i in range(a.getRows()):
+    v = 5 if i % 2 == 1 else 20
+    for j in range(a.getCols()):
+      assert a[i, j] == v
+
+  a[:] = 5
+  a[2:-2:2] = 20
+  for i in range(a.getRows()):
+    v = 5 if i % 2 == 1 or i >= a.getRows() - 2 or i < 2 else 20
+    for j in range(a.getCols()):
+      assert a[i, j] == v
+
+  a[:, :] = 5
+  for i in range(a.getRows()):
+    for j in range(a.getCols()):
+      assert a[i, j] == 5
+
+  # Indexing with two slices
+  a[2:-2:2, 3:-3] = 20
+  for i in range(a.getRows()):
+    is_v = i >= 2 and i % 2 == 0 and i < a.getRows() - 2
+    for j in range(a.getCols()):
+      is_vj = is_v and j >= 3 and j < a.getCols() - 3
+      v = 20 if is_vj else 5
+      assert a[i, j] == v
+
+
+
+  # Negative step not supported
+  with pytest.raises(RuntimeError):
+    a[::-1] = 20
+  with pytest.raises(RuntimeError):
+    a[:, ::-1] = 20
+
+  # Wrong start and end values
+  with pytest.raises(RuntimeError):
+    a[2:1] = 20
+  with pytest.raises(RuntimeError):
+    a[:, 3:2] = 20
+
+
+  a = ArrayDouble2D(h, w, 0.0)
+  single_row = np.ones((w, ), dtype=np.double) * 20
+
+  a[2] = single_row
+  assert not np.any(np.equal(a.numpy()[list(set(range(h)) - {2})], single_row))
+  assert np.all(np.equal(a.numpy()[2], single_row))
+
+  a[:] = 0
+  a[1:-2] = single_row
+  assert np.all(np.equal(a.numpy()[list(set(range(h)) - {0, h - 2, h - 1})], single_row))
+  assert np.all(np.equal(a.numpy()[[0, h - 2, h - 1]], 0))
+
+  multi_rows = np.asarray([[i * w + j for j in range(w)] for i in range(h - 5)])
+
+  a[:-5] = multi_rows
+  assert np.all(np.equal(a.numpy()[:-5], multi_rows))

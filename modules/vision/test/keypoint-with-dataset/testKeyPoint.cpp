@@ -41,14 +41,13 @@
 
 #include <visp3/core/vpConfig.h>
 
-#if defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_FEATURES2D) && defined(HAVE_OPENCV_VIDEO)
+#if defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO) && \
+  ((VISP_HAVE_OPENCV_VERSION < 0x050000)  && defined(HAVE_OPENCV_CALIB3D) && defined(HAVE_OPENCV_FEATURES2D)) || \
+  ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_3D) && defined(HAVE_OPENCV_FEATURES))
 
 #include <visp3/core/vpImage.h>
 #include <visp3/core/vpIoTools.h>
-#include <visp3/gui/vpDisplayGDI.h>
-#include <visp3/gui/vpDisplayGTK.h>
-#include <visp3/gui/vpDisplayOpenCV.h>
-#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayFactory.h>
 #include <visp3/io/vpImageIo.h>
 #include <visp3/io/vpParseArgv.h>
 #include <visp3/io/vpVideoReader.h>
@@ -75,24 +74,23 @@ bool getOptions(int argc, const char **argv, bool &click_allowed, bool &display)
 void usage(const char *name, const char *badparam)
 {
   fprintf(stdout, "\n\
-          Test keypoints matching.\n\
-          \n\
-          SYNOPSIS\n\
-          %s [-c] [-d] [-h]\n",
-          name);
+  Test keypoints matching.\n\
+  \n\
+  SYNOPSIS\n\
+  %s [-c] [-d] [-h]\n", name);
 
   fprintf(stdout, "\n\
-              OPTIONS:                                               \n\
-              \n\
-              -c\n\
-              Disable the mouse click. Useful to automate the \n\
-              execution of this program without human intervention.\n\
-              \n\
-              -d \n\
-              Turn off the display.\n\
-              \n\
-              -h\n\
-              Print the help.\n");
+  OPTIONS:                                               \n\
+  \n\
+  -c\n\
+     Disable the mouse click. Useful to automate the \n\
+     execution of this program without human intervention.\n\
+  \n\
+  -d \n\
+     Turn off the display.\n\
+  \n\
+  -h\n\
+     Print the help.\n");
 
   if (badparam)
     fprintf(stdout, "\nERROR: Bad parameter [%s]\n", badparam);
@@ -149,10 +147,15 @@ template <typename Type>
 void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_display, vpImage<Type> &Iref,
               vpImage<Type> &Icur, vpImage<Type> &Imatch)
 {
+#if defined(VISP_HAVE_DATASET)
 #if VISP_HAVE_DATASET_VERSION >= 0x030600
   std::string ext("png");
 #else
   std::string ext("pgm");
+#endif
+#else
+  // We suppose that the user will download a recent dataset
+  std::string ext("png");
 #endif
   // Set the path location of the image sequence
   std::string dirname = vpIoTools::createFilePath(env_ipath, "mbt/cube");
@@ -174,19 +177,15 @@ void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_dis
   Imatch.resize(Icur.getHeight(), 2 * Icur.getWidth());
   Imatch.insert(Iref, vpImagePoint(0, 0));
 
-#if defined(VISP_HAVE_X11)
-  vpDisplayX display;
-#elif defined(VISP_HAVE_GTK)
-  vpDisplayGTK display;
-#elif defined(VISP_HAVE_GDI)
-  vpDisplayGDI display;
-#elif defined(HAVE_OPENCV_HIGHGUI)
-  vpDisplayOpenCV display;
-#endif
+  vpDisplay *display = nullptr;
 
   if (opt_display) {
-    display.setDownScalingFactor(vpDisplay::SCALE_AUTO);
-    display.init(Imatch, 0, 0, "ORB keypoints matching");
+#ifdef VISP_HAVE_DISPLAY
+    display = vpDisplayFactory::allocateDisplay(Imatch, 0, 0, "ORB keypoints matching");
+    display->setDownScalingFactor(vpDisplay::SCALE_AUTO);
+#else
+    std::cout << "No image viewer is available..." << std::endl;
+#endif
   }
 
   bool opt_click = false;
@@ -217,7 +216,7 @@ void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_dis
         }
       }
       else {
-     // Use right click to enable/disable step by step tracking
+        // Use right click to enable/disable step by step tracking
         if (vpDisplay::getClick(Imatch, button, false)) {
           if (button == vpMouseButton::button3) {
             opt_click = true;
@@ -228,6 +227,10 @@ void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_dis
         }
       }
     }
+  }
+
+  if (display) {
+    delete display;
   }
 }
 

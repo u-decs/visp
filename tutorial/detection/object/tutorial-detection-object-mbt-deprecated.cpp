@@ -1,28 +1,37 @@
 //! \example tutorial-detection-object-mbt-deprecated.cpp
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpIoTools.h>
-#include <visp3/gui/vpDisplayGDI.h>
-#include <visp3/gui/vpDisplayOpenCV.h>
-#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayFactory.h>
 #include <visp3/io/vpVideoReader.h>
 #include <visp3/mbt/vpMbEdgeTracker.h>
 #include <visp3/vision/vpKeyPoint.h>
 
 int main(int argc, char **argv)
 {
-#if defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_FEATURES2D)
+#if defined(HAVE_OPENCV_IMGPROC) && defined(VISP_HAVE_DISPLAY) && \
+  (((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_CALIB3D) && (defined(HAVE_OPENCV_FEATURES2D) || defined(HAVE_OPENCV_XFEATURES2D))) || \
+  ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_3D) && defined(HAVE_OPENCV_FEATURES)))
+
 #ifdef ENABLE_VISP_NAMESPACE
   using namespace VISP_NAMESPACE_NAME;
 #endif
   //! [MBT code]
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+  std::shared_ptr<vpDisplay> display;
+#else
+  vpDisplay *display = nullptr;
+#endif
   try {
     std::string videoname = "teabox.mp4";
 
-    for (int i = 0; i < argc; i++) {
-      if (std::string(argv[i]) == "--name")
-        videoname = std::string(argv[i + 1]);
-      else if (std::string(argv[i]) == "--help") {
-        std::cout << "\nUsage: " << argv[0] << " [--name <video name>] [--help]\n" << std::endl;
+    for (int i = 1; i < argc; i++) {
+      if (std::string(argv[i]) == "--name" && i + 1 < argc) {
+        videoname = std::string(argv[++i]);
+      }
+      else if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h") {
+        std::cout << "\nUsage: " << argv[0]
+          << " [--name <video name>]"
+          << "[--help] [-h]\n" << std::endl;
         return EXIT_SUCCESS;
       }
     }
@@ -46,18 +55,11 @@ int main(int argc, char **argv)
     g.setFileName(videoname);
     g.open(I);
 
-#if defined(VISP_HAVE_X11)
-    vpDisplayX display;
-#elif defined(VISP_HAVE_GDI)
-    vpDisplayGDI display;
-#elif defined(HAVE_OPENCV_HIGHGUI)
-    vpDisplayOpenCV display;
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+    display = vpDisplayFactory::createDisplay(I, 100, 100, "Model-based edge tracker");
 #else
-    std::cout << "No image viewer is available..." << std::endl;
-    return EXIT_FAILURE;
+    display = vpDisplayFactory::allocateDisplay(I, 100, 100, "Model-based edge tracker");
 #endif
-
-    display.init(I, 100, 100, "Model-based edge tracker");
 
     vpMbEdgeTracker tracker;
     bool usexml = false;
@@ -100,13 +102,12 @@ int main(int argc, char **argv)
     //! [MBT code]
 
     //! [Keypoint selection]
-#if (defined(VISP_HAVE_OPENCV_NONFREE) || defined(VISP_HAVE_OPENCV_XFEATURES2D)) ||                                    \
-    (VISP_HAVE_OPENCV_VERSION >= 0x030411 && CV_MAJOR_VERSION < 4) || (VISP_HAVE_OPENCV_VERSION >= 0x040400)
+#if ((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_XFEATURES2D)) || ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_FEATURES))
     std::string detectorName = "SIFT";
     std::string extractorName = "SIFT";
     std::string matcherName = "BruteForce";
     std::string configurationFile = "detection-config-SIFT.xml";
-#else
+#elif ((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_FEATURES2D)) || ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_FEATURES))
     std::string detectorName = "FAST";
     std::string extractorName = "ORB";
     std::string matcherName = "BruteForce-Hamming";
@@ -225,6 +226,12 @@ int main(int argc, char **argv)
   catch (const vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
   }
+
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+  if (display != nullptr) {
+    delete display;
+}
+#endif
 #else
   (void)argc;
   (void)argv;

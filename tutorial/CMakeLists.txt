@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 project(ViSP-tutorial)
 
@@ -45,11 +45,11 @@ visp_add_subdirectory(imgproc/contrast-sharpening          REQUIRED_DEPS visp_co
 visp_add_subdirectory(imgproc/count-coins                  REQUIRED_DEPS visp_core visp_io visp_gui visp_imgproc)
 visp_add_subdirectory(imgproc/flood-fill                   REQUIRED_DEPS visp_core visp_io visp_gui visp_imgproc)
 visp_add_subdirectory(imgproc/hough-transform              REQUIRED_DEPS visp_core visp_gui visp_imgproc)
-visp_add_subdirectory(kalman                               REQUIRED_DEPS visp_core visp_gui)
+visp_add_subdirectory(kalman                               REQUIRED_DEPS visp_core visp_gui visp_vision)
 visp_add_subdirectory(mean-drift                           REQUIRED_DEPS visp_core visp_gui)
 visp_add_subdirectory(misc/npz                             REQUIRED_DEPS visp_core visp_gui visp_io)
 visp_add_subdirectory(munkres                              REQUIRED_DEPS visp_core visp_gui)
-visp_add_subdirectory(particle-filter                      REQUIRED_DEPS visp_core visp_io visp_gui)
+visp_add_subdirectory(particle-filter                      REQUIRED_DEPS visp_core visp_io visp_gui visp_vision)
 visp_add_subdirectory(particle-filter-curve-fitting        REQUIRED_DEPS visp_core visp_io visp_gui)
 visp_add_subdirectory(robot/flir-ptu                       REQUIRED_DEPS visp_core visp_robot visp_sensor visp_vision visp_gui visp_vs visp_visual_features visp_detection)
 visp_add_subdirectory(robot/pioneer                        REQUIRED_DEPS visp_core visp_robot visp_vs visp_gui)
@@ -68,6 +68,8 @@ visp_add_subdirectory(tracking/model-based/old/edges       REQUIRED_DEPS visp_co
 visp_add_subdirectory(tracking/model-based/old/generic     REQUIRED_DEPS visp_core visp_mbt visp_io visp_gui)
 visp_add_subdirectory(tracking/model-based/old/hybrid      REQUIRED_DEPS visp_core visp_mbt visp_klt visp_io visp_gui)
 visp_add_subdirectory(tracking/model-based/old/keypoint    REQUIRED_DEPS visp_core visp_mbt visp_klt visp_io visp_gui)
+visp_add_subdirectory(tracking/render-based                REQUIRED_DEPS visp_core visp_rbt visp_io visp_gui visp_sensor)
+
 visp_add_subdirectory(tracking/template-tracker            REQUIRED_DEPS visp_core visp_tt visp_io visp_gui)
 visp_add_subdirectory(tracking/moving-edges                REQUIRED_DEPS visp_core visp_me visp_io visp_gui visp_sensor)
 visp_add_subdirectory(tracking/dnn                         REQUIRED_DEPS visp_core visp_detection visp_dnn_tracker visp_io visp_gui visp_sensor)

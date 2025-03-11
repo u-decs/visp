@@ -89,7 +89,7 @@ BEGIN_VISP_NAMESPACE
 
   \b Note: the weights do not sum to one. Negative values can even be expected.
 
-  \b Additionnal \b note: the original author recommended to set \f$ \beta = 2 \f$ for Gaussian problems, \f$ \kappa = 3 - n \f$
+  \b Additional\b note: the original author recommended to set \f$ \beta = 2 \f$ for Gaussian problems, \f$ \kappa = 3 - n \f$
   and \f$ 0 \leq \alpha \leq 1 \f$, where a larger value for \f$ \alpha \f$ spreads the sigma points further from the mean,
   which can be a problem for highly non-linear problems.
 */
@@ -126,14 +126,14 @@ public:
    * \param[in] covariance The current process covariance of the UKF.
    * @return std::vector<vpColVector> The sigma points.
    */
-  virtual std::vector<vpColVector> drawSigmaPoints(const vpColVector &mean, const vpMatrix &covariance) override;
+  virtual std::vector<vpColVector> drawSigmaPoints(const vpColVector &mean, const vpMatrix &covariance) VP_OVERRIDE;
 
   /**
-   * \brief Computed the weigths that correspond to the sigma poitns that have been drawn.
+   * \brief Computed the weights that correspond to the sigma points that have been drawn.
    *
    * \return vpSigmaPointsWeights The weights that correspond to the sigma points.
    */
-  virtual vpSigmaPointsWeights computeWeights() override;
+  virtual vpSigmaPointsWeights computeWeights() VP_OVERRIDE;
 protected:
   inline void computeLambda()
   {

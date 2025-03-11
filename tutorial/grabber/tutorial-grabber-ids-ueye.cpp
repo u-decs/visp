@@ -1,9 +1,7 @@
 /*! \example tutorial-grabber-ids-ueye.cpp */
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpImage.h>
-#include <visp3/gui/vpDisplayGDI.h>
-#include <visp3/gui/vpDisplayOpenCV.h>
-#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayFactory.h>
 #include <visp3/io/vpImageStorageWorker.h>
 #include <visp3/sensor/vpUeyeGrabber.h>
 
@@ -112,6 +110,11 @@ int main(int argc, const char *argv[])
 #ifdef ENABLE_VISP_NAMESPACE
   using namespace VISP_NAMESPACE_NAME;
 #endif
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+  std::shared_ptr<vpDisplay> display;
+#else
+  vpDisplay *display = nullptr;
+#endif
   try {
     unsigned int opt_device = 0;
     std::string opt_seqname;
@@ -127,44 +130,44 @@ int main(int argc, const char *argv[])
     bool opt_display = true;
 
     for (int i = 1; i < argc; i++) {
-      if (std::string(argv[i]) == "--device") {
-        opt_device = static_cast<unsigned int>(std::atoi(argv[i + 1]));
+      if (std::string(argv[i]) == "--device" && i + 1 < argc) {
+        opt_device = static_cast<unsigned int>(std::atoi(argv[++i]));
         i++;
       }
-      else if (std::string(argv[i]) == "--config-file") {
-        opt_config_file = std::string(argv[i + 1]);
+      else if (std::string(argv[i]) == "--config-file" && i + 1 < argc) {
+        opt_config_file = std::string(argv[++i]);
         i++;
       }
-      else if (std::string(argv[i]) == "--fps") {
-        opt_fps = std::string(argv[i + 1]);
+      else if (std::string(argv[i]) == "--fps" && i + 1 < argc) {
+        opt_fps = std::string(argv[++i]);
         i++;
       }
-      else if (std::string(argv[i]) == "--gain") {
-        opt_gain = std::string(argv[i + 1]);
+      else if (std::string(argv[i]) == "--gain" && i + 1 < argc) {
+        opt_gain = std::string(argv[++i]);
         i++;
       }
-      else if (std::string(argv[i]) == "--shutter") {
-        opt_shutter = std::string(argv[i + 1]);
+      else if (std::string(argv[i]) == "--shutter" && i + 1 < argc) {
+        opt_shutter = std::string(argv[++i]);
         i++;
       }
-      else if (std::string(argv[i]) == "--subsample") {
-        opt_subsample = std::atoi(argv[i + 1]);
+      else if (std::string(argv[i]) == "--subsample" && i + 1 < argc) {
+        opt_subsample = std::atoi(argv[++i]);
         i++;
       }
-      else if (std::string(argv[i]) == "--white-balance") {
-        opt_white_balance = std::atoi(argv[i + 1]);
+      else if (std::string(argv[i]) == "--white-balance" && i + 1 < argc) {
+        opt_white_balance = std::atoi(argv[++i]);
         i++;
       }
-      else if (std::string(argv[i]) == "--color-mode") {
-        opt_color_mode = std::string(argv[i + 1]);
+      else if (std::string(argv[i]) == "--color-mode" && i + 1 < argc) {
+        opt_color_mode = std::string(argv[++i]);
         i++;
       }
-      else if (std::string(argv[i]) == "--seqname") {
-        opt_seqname = std::string(argv[i + 1]);
+      else if (std::string(argv[i]) == "--seqname" && i + 1 < argc) {
+        opt_seqname = std::string(argv[++i]);
         i++;
       }
-      else if (std::string(argv[i]) == "--record") {
-        opt_record_mode = std::atoi(argv[i + 1]);
+      else if (std::string(argv[i]) == "--record" && i + 1 < argc) {
+        opt_record_mode = std::atoi(argv[++i]);
         i++;
       }
       else if (std::string(argv[i]) == "--verbose" || std::string(argv[i]) == "-v") {
@@ -301,23 +304,19 @@ int main(int argc, const char *argv[])
     std::cout << "Config file       : " << (opt_config_file.empty() ? "empty" : opt_config_file) << std::endl;
     std::cout << "Image size        : " << I.getWidth() << " " << I.getHeight() << std::endl;
 
-    vpDisplay *d = nullptr;
     if (opt_display) {
-#if !(defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
+#if !(defined(VISP_HAVE_DISPLAY))
       std::cout << "No image viewer is available..." << std::endl;
       opt_display = false;
-#endif
-    }
-    if (opt_display) {
-#ifdef VISP_HAVE_X11
-      d = new vpDisplayX;
-#elif defined(VISP_HAVE_GDI)
-      d = new vpDisplayGDI;
-#elif defined(HAVE_OPENCV_HIGHGUI)
-      d = new vpDisplayOpenCV;
+#else
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+      display = vpDisplayFactory::createDisplay();
+#else
+      display = vpDisplayFactory::allocateDisplay();
 #endif
       d->setDownScalingFactor(vpDisplay::SCALE_AUTO);
       d->init(I);
+#endif
     }
 
 #ifdef USE_COLOR
@@ -359,14 +358,16 @@ int main(int argc, const char *argv[])
     }
     image_queue.cancel();
     image_storage_thread.join();
-
-    if (d) {
-      delete d;
-    }
   }
   catch (const vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
-}
+  }
+
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+  if (display != nullptr) {
+    delete display;
+  }
+#endif
 #else
   (void)argc;
   (void)argv;

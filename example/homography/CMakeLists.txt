@@ -33,9 +33,9 @@
 #
 #############################################################################
 
-project(example-homography)
+cmake_minimum_required(VERSION 3.10)
 
-cmake_minimum_required(VERSION 3.5)
+project(example-homography)
 
 find_package(VISP REQUIRED visp_core visp_vision visp_io)
 

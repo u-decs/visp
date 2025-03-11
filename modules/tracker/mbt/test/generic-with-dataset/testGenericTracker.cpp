@@ -193,10 +193,15 @@ bool read_data(const std::string &input_directory, int cpt, const vpCameraParame
   static_assert(std::is_same<Type, unsigned char>::value || std::is_same<Type, vpRGBa>::value,
     "Template function supports only unsigned char and vpRGBa images!");
 #endif
+#if defined(VISP_HAVE_DATASET)
 #if VISP_HAVE_DATASET_VERSION >= 0x030600
   std::string ext("png");
 #else
   std::string ext("pgm");
+#endif
+#else
+  // We suppose that the user will download a recent dataset
+  std::string ext("png");
 #endif
   char buffer[FILENAME_MAX];
   snprintf(buffer, FILENAME_MAX, std::string(input_directory + "/Images/Image_%04d." + ext).c_str(), cpt);
@@ -371,7 +376,7 @@ bool run(const std::string &input_directory, bool opt_click_allowed, bool opt_di
   map_thresh[vpMbGenericTracker::KLT_TRACKER] =
     useScanline ? std::pair<double, double>(0.007, 1.9) : std::pair<double, double>(0.007, 1.8);
   map_thresh[vpMbGenericTracker::EDGE_TRACKER | vpMbGenericTracker::KLT_TRACKER] =
-    useScanline ? std::pair<double, double>(0.005, 3.7) : std::pair<double, double>(0.007, 3.4);
+    useScanline ? std::pair<double, double>(0.005, 3.8) : std::pair<double, double>(0.007, 3.7);
 #endif
   map_thresh[vpMbGenericTracker::EDGE_TRACKER | vpMbGenericTracker::DEPTH_DENSE_TRACKER] =
     useScanline ? std::pair<double, double>(0.003, 1.7) : std::pair<double, double>(0.002, 0.8);

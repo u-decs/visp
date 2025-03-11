@@ -128,6 +128,9 @@ namespace vp = VISP_NAMESPACE_NAME;
 #define END_VISP_NAMESPACE
 #endif
 
+// Defined if the warp() methods of vpImageTools are enabled
+#cmakedefine ENABLE_IMAGE_TOOLS_WARP
+
 // Enable debug and trace printings
 #cmakedefine VP_TRACE
 #cmakedefine VP_DEBUG
@@ -177,12 +180,6 @@ namespace vp = VISP_NAMESPACE_NAME;
 // Defined if OpenCV available.
 #cmakedefine VISP_HAVE_OPENCV
 
-// Defined if OpenCV nonfree module available. Only with OpenCV < 3.0.0
-#cmakedefine VISP_HAVE_OPENCV_NONFREE
-
-// Defined if OpenCV xfeatures2d module available. Only since OpenCV >= 3.0.0
-#cmakedefine VISP_HAVE_OPENCV_XFEATURES2D
-
 // OpenCV version in hexadecimal (for example 2.1.0 gives 0x020100).
 #ifdef VISP_HAVE_OPENCV
 #  define VISP_HAVE_OPENCV_VERSION ${VISP_HAVE_OPENCV_VERSION}
@@ -190,6 +187,10 @@ namespace vp = VISP_NAMESPACE_NAME;
 #endif
 
 // For compat with previous releases
+#if defined(HAVE_OPENCV_XFEATURES2D)
+#define VISP_HAVE_OPENCV_XFEATURES2D
+#endif
+
 #if defined(HAVE_OPENCV_OBJDETECT)
 #define VISP_HAVE_OPENCV_OBJDETECT
 #endif
@@ -274,6 +275,9 @@ namespace vp = VISP_NAMESPACE_NAME;
 
 // Defined if Ogre3d is available.
 #cmakedefine VISP_HAVE_OGRE
+#ifdef VISP_HAVE_OGRE
+#  define VISP_HAVE_OGRE_VERSION ${VISP_HAVE_OGRE_VERSION}
+#endif
 
 // Defined if Ogre3d plugins.cfg is available.
 #cmakedefine VISP_HAVE_OGRE_PLUGINS_PATH "${VISP_HAVE_OGRE_PLUGINS_PATH}"

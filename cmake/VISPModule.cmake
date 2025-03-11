@@ -589,21 +589,29 @@ endfunction()
 # setup include paths for the list of passed modules
 macro(vp_target_include_modules target)
   set(is_system "")
+  set(is_private "")
+  vp_get_apple_sdk_dir(apple_sdk_dir)
   foreach(d ${ARGN})
+
     if("${d}" STREQUAL "SYSTEM")
       set(is_system "SYSTEM")
+    elseif("${d}" STREQUAL "PRIVATE")
+      set(is_private "PRIVATE")
     elseif(d MATCHES "^visp_" AND HAVE_${d})
       if (EXISTS "${VISP_MODULE_${d}_LOCATION}/include")
         vp_target_include_directories(${target} "${VISP_MODULE_${d}_LOCATION}/include")
       endif()
     elseif(EXISTS "${d}")
-      # FS keep external deps inc
-      if(is_system)
-        set(VISP_MODULE_${the_module}_SYSTEM_INC_DEPS "${VISP_MODULE_${the_module}_SYSTEM_INC_DEPS};${d}" CACHE INTERNAL "")
-      else()
-        set(VISP_MODULE_${the_module}_INC_DEPS "${VISP_MODULE_${the_module}_INC_DEPS};${d}" CACHE INTERNAL "")
+      vp_string_starts_with(${d} ${apple_sdk_dir} apple_sdk_dir_found)
+      if (NOT apple_sdk_dir_found)
+        # FS keep external deps inc
+        if(is_system)
+          set(VISP_MODULE_${the_module}_SYSTEM_INC_DEPS "${VISP_MODULE_${the_module}_SYSTEM_INC_DEPS};${d}" CACHE INTERNAL "")
+        elseif(NOT is_private)
+          set(VISP_MODULE_${the_module}_INC_DEPS "${VISP_MODULE_${the_module}_INC_DEPS};${d}" CACHE INTERNAL "")
+        endif()
+        vp_target_include_directories(${target} "${is_system}" "${d}")
       endif()
-      vp_target_include_directories(${target} "${is_system}" "${d}")
     endif()
   endforeach()
   vp_list_unique(VISP_MODULE_${the_module}_INC_DEPS)
@@ -898,9 +906,7 @@ macro(_vp_create_module)
       endforeach()
     endif()
   endforeach()
-
 endmacro()
-
 
 # short command for adding simple ViSP module
 # see vp_add_module for argument details
@@ -990,12 +996,6 @@ macro(vp_add_tests)
   if(BUILD_TESTS AND EXISTS "${test_path}")
     __vp_parse_test_sources(TEST ${ARGN})
 
-    vp_find_dataset(VISP_DATASET_FOUND VISP_DATASET_LOCATION
-                    VISP_DATASET_VERSION
-                    VISP_DATASET_VERSION_MAJOR
-                    VISP_DATASET_VERSION_MINOR
-                    VISP_DATASET_VERSION_PATCH)
-
     set(__exclude_ctest "")
     foreach(__folder ${VISP_TEST_${the_module}_CTEST_EXCLUDE_FOLDER} )
       file(GLOB_RECURSE __files "${CMAKE_CURRENT_LIST_DIR}/test/${__folder}/*.cpp")
@@ -1035,7 +1035,7 @@ macro(vp_add_tests)
           get_filename_component(the_target ${t} NAME_WE)
           # From source compile the binary and add link rules
           vp_add_executable(${the_target} ${t})
-          vp_target_include_modules(${the_target} ${test_deps} ${VISP_TEST_${the_module}_DEPS_PRIVATE_INCLUDE_DIRS})
+          vp_target_include_modules(${the_target} ${test_deps} PRIVATE ${VISP_TEST_${the_module}_DEPS_PRIVATE_INCLUDE_DIRS})
           vp_target_link_libraries(${the_target} ${test_deps} ${VISP_MODULE_${the_module}_DEPS} ${VISP_TEST_${the_module}_DEPS_PRIVATE_LIBRARIES})
 
           # ctest only:

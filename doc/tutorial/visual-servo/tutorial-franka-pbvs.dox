@@ -1,13 +1,15 @@
 /**
 
-\page tutorial-franka-pbvs Tutorial: PBVS with Panda 7-dof robot from Franka Emika
+\page tutorial-franka-pbvs Tutorial: Eye-in-hand PBVS with Panda 7-dof robot from Franka Emika
 \tableofcontents
 
 \section franka_intro Introduction
 
-This tutorial explains how to do a position-based visual-servoing with the Panda 7-dof robot from Franka Emika equipped with an Intel Realsense D435 camera.
+This tutorial explains how to implement eye-in-hand position-based visual servoing (PBVS) with Franka Emika's Panda
+7-dof robot equipped with an Intel Realsense camera mounted on its end-effector.
 
-The following video shows the resulting robot trajectory when the robot is achieving a position-based visual servoing over an Apriltag target.
+The following video shows the resulting robot trajectory when the robot is achieving a position-based visual servoing
+over an Apriltag target.
 
 \htmlonly
 <p align="center"><iframe width="560" height="315" src="https://www.youtube.com/embed/7A5cqUEKXHg" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></p>
@@ -18,8 +20,8 @@ The following video shows the resulting robot trajectory when the robot is achie
 \subsection franka_prereq_hardware Hardware
 
 We suppose here that you have:
-- a <a href="https://www.franka.de/cart/">Panda robot</a> in its research version from <a href="https://www.franka.de/">Franka Emika</a> that will be controlled throw vpRobotFranka class.
-- an Intel Realsense <a href="https://click.intel.com/intelr-realsensetm-depth-camera-d435.html">D345</a> camera attached to the robot end-effector.
+- a Panda robot in its research version from <a href="https://franka.de/">Franka Emika</a> that will be controlled throw vpRobotFranka class.
+- an Intel Realsense <a href="https://www.intelrealsense.com/depth-camera-d435/">D345</a> camera attached to the robot end-effector.
 Note that this tutorial should also work with any other Intel Realsense camera.
 
 \subsection franka_prereq_rt_linux Setting up a real-time kernel
@@ -212,7 +214,7 @@ If you are interested to get other tags, follow the steps described in \ref apri
 
 \subsection franka_prereq_calib_extrinsic Calibrate extrinsic camera parameters
 
-Follow the steps described in \ref tutorial-calibration-extrinsic in order to estimate the end-effector to camera transformation. This step is mandatory to control the robot in cartesian in the camera frame.
+Follow the steps described in \ref tutorial-calibration-extrinsic-eye-in-hand in order to estimate the end-effector to camera transformation. This step is mandatory to control the robot in cartesian in the camera frame.
 
 \subsection franka_prereq_visp_build Configure and build ViSP
 
@@ -258,17 +260,17 @@ An example of position-based visual servoing using Panda robot equipped with a R
 
 - Attach your Realsense camera to the robot end-effector
 - Put an Apriltag in the camera field of view
-- If not already done, follow \ref tutorial-calibration-extrinsic to estimate \f$^e{\bf M}_c\f$ the homogeneous transformation between robot end-effector and camera frame. We suppose here that the file is located in `apps/calibration/eMc.yaml`.
+- If not already done, follow \ref tutorial-calibration-extrinsic-eye-in-hand to estimate \f$^e{\bf M}_c\f$ the homogeneous transformation between robot end-effector and camera frame. We suppose here that the file is located in `apps/calibration/intrinsic/eMc.yaml`.
 
 Now enter in `example/servo-franka folder` and run `servoFrankaPBVS` binary using `--eMc` to locate the file containing the \f$^e{\bf M}_c\f$ transformation. Other options are available. Using `--help` show them:
 
     $ cd example/servo-franka
     $ ./servoFrankaPBVS --help
-    ./servoFrankaPBVS [--ip <default 192.168.1.1>] [--tag_size <marker size in meter; default 0.12>] [--eMc <eMc extrinsic file>] [--quad_decimate <decimation; default 2>] [--adaptive_gain] [--plot] [--task_sequencing] [--no-convergence-threshold] [--verbose] [--help] [-h]
+    ./servoFrankaPBVS [--ip <default 192.168.1.1>] [--tag-size <marker size in meter; default 0.12>] [--eMc <eMc extrinsic file>] [--quad-decimate <decimation; default 2>] [--adpative-gain] [--plot] [--task-sequencing] [--no-convergence-threshold] [--verbose] [--help] [-h]
 
 Run the binary activating the plot and using a constant gain:
 
-    $ ./servoFrankaPBVS --eMc ../../apps/calibration/eMc.yaml --plot
+    $ ./servoFrankaPBVS --eMc ../../apps/calibration/intrinsic/eMc.yaml --plot
 
 \note If you encounter the following error message:
 \verbatim
@@ -287,15 +289,15 @@ Now you should see new window that shows the image from the camera like in the n
 
 You can also activate an adaptive gain that will make the convergence faster:
 
-    $ ./servoFrankaPBVS --eMc ../../apps/calibration/eMc.yaml --plot --adaptive_gain
+    $ ./servoFrankaPBVS --eMc ../../apps/calibration/intrinsic/eMc.yaml --plot --adpative-gain
 
 You can also start the robot with a zero velocity at the beginning introducing task sequencing option:
 
-    $ ./servoFrankaPBVS --eMc ../../apps/calibration/eMc.yaml --plot --task_sequencing
+    $ ./servoFrankaPBVS --eMc ../../apps/calibration/intrinsic/eMc.yaml --plot --task-sequencing
 
 And finally you can activate the adaptive gain and task sequencing:
 
-    $ ./servoFrankaPBVS --eMc ../../apps/calibration/eMc.yaml --plot --adaptive_gain --task_sequencing
+    $ ./servoFrankaPBVS --eMc ../../apps/calibration/intrinsic/eMc.yaml --plot --adpative-gain --task-sequencing
 
 To learn more about adaptive gain and task sequencing see \ref tutorial-boost-vs.
 

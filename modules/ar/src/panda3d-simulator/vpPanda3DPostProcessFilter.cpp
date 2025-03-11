@@ -32,22 +32,24 @@
 
 #if defined(VISP_HAVE_PANDA3D)
 
-#include <lightRampAttrib.h>
+#include "lightRampAttrib.h"
+#include "graphicsOutput.h"
+#include "windowFramework.h"
+#include "graphicsEngine.h"
 
 BEGIN_VISP_NAMESPACE
-const char *vpPanda3DPostProcessFilter::FILTER_VERTEX_SHADER = R"shader(
-#version 330
-in vec4 p3d_Vertex;
-uniform mat4 p3d_ModelViewProjectionMatrix;
-in vec2 p3d_MultiTexCoord0;
-out vec2 texcoords;
+const std::string vpPanda3DPostProcessFilter::FILTER_VERTEX_SHADER =
+"#version 330\n"
+"in vec4 p3d_Vertex;\n"
+"uniform mat4 p3d_ModelViewProjectionMatrix;\n"
+"in vec2 p3d_MultiTexCoord0;\n"
+"out vec2 texcoords;\n"
 
-void main()
-{
-  gl_Position = p3d_ModelViewProjectionMatrix * p3d_Vertex;
-  texcoords = p3d_MultiTexCoord0;
-}
-)shader";
+"void main()\n"
+"{\n"
+"  gl_Position = p3d_ModelViewProjectionMatrix * p3d_Vertex;\n"
+"  texcoords = p3d_MultiTexCoord0;\n"
+"}\n";
 
 void vpPanda3DPostProcessFilter::setupScene()
 {
@@ -62,8 +64,8 @@ void vpPanda3DPostProcessFilter::setupScene()
     "Cannot add a postprocess filter to a renderer that does not define getMainOutputBuffer()");
   }
   m_shader = Shader::make(Shader::ShaderLanguage::SL_GLSL,
-                        FILTER_VERTEX_SHADER,
-                        m_fragmentShader);
+                          FILTER_VERTEX_SHADER,
+                          m_fragmentShader);
   m_renderRoot.set_shader(m_shader);
   m_renderRoot.set_shader_input("dp", LVector2f(1.0 / buffer->get_texture()->get_x_size(), 1.0 / buffer->get_texture()->get_y_size()));
   m_renderRoot.set_texture(buffer->get_texture());
@@ -99,9 +101,12 @@ void vpPanda3DPostProcessFilter::setupRenderTarget()
   GraphicsEngine *engine = windowOutput->get_engine();
   GraphicsStateGuardian *gsg = windowOutput->get_gsg();
   GraphicsPipe *pipe = windowOutput->get_pipe();
-  m_buffer = engine->make_output(pipe, m_name, m_renderOrder,
+  static int id = 0;
+  m_buffer = engine->make_output(pipe, m_name + std::to_string(id), m_renderOrder,
                                       fbp, win_prop, flags,
                                       gsg, windowOutput);
+
+  ++id;
   if (m_buffer == nullptr) {
     throw vpException(vpException::fatalError, "Could not create buffer");
   }
@@ -109,7 +114,7 @@ void vpPanda3DPostProcessFilter::setupRenderTarget()
   //m_buffer->set_inverted(true);
   m_texture = new Texture();
   fbp.setup_color_texture(m_texture);
-  m_buffer->add_render_texture(m_texture, m_isOutput ? GraphicsOutput::RenderTextureMode::RTM_bind_or_copy : GraphicsOutput::RenderTextureMode::RTM_copy_texture);
+  m_buffer->add_render_texture(m_texture, m_isOutput ? GraphicsOutput::RenderTextureMode::RTM_copy_texture : GraphicsOutput::RenderTextureMode::RTM_bind_or_copy);
   m_buffer->set_clear_color(LColor(0.f));
   m_buffer->set_clear_color_active(true);
   DisplayRegion *region = m_buffer->make_display_region();

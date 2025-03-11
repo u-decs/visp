@@ -83,7 +83,7 @@ vpMatrix vpMatrix::computeCovarianceMatrix(const vpMatrix &A, const vpColVector 
 
   \param b : Vector b from WAx = Wb.
 
-  \param W : Diagonal weigths matrix from WAx = Wb.
+  \param W : Diagonal weights matrix from WAx = Wb.
 */
 vpMatrix vpMatrix::computeCovarianceMatrix(const vpMatrix &A, const vpColVector &x, const vpColVector &b,
                                            const vpMatrix &W)
@@ -213,15 +213,16 @@ void vpMatrix::computeCovarianceMatrixVVS(const vpHomogeneousMatrix &cMo, const 
 
   ctoInitSkew = ctoInitSkew * LthetauInvAnalytic;
 
+  const unsigned int index_3 = 3;
   for (unsigned int a = 0; a < val_3; ++a) {
     for (unsigned int b = 0; b < val_3; ++b) {
-      LpInv[a][b + 3] = ctoInitSkew[a][b];
+      LpInv[a][b + index_3] = ctoInitSkew[a][b];
     }
   }
 
   for (unsigned int a = 0; a < val_3; ++a) {
     for (unsigned int b = 0; b < val_3; ++b) {
-      LpInv[a + 3][b + 3] = LthetauInvAnalytic[a][b];
+      LpInv[a + index_3][b + index_3] = LthetauInvAnalytic[a][b];
     }
   }
 

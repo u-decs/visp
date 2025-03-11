@@ -1,9 +1,7 @@
 //! \example tutorial-mb-generic-tracker-full.cpp
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpIoTools.h>
-#include <visp3/gui/vpDisplayGDI.h>
-#include <visp3/gui/vpDisplayOpenCV.h>
-#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayFactory.h>
 #include <visp3/gui/vpPlot.h>
 //! [Include]
 #include <visp3/mbt/vpMbGenericTracker.h>
@@ -31,7 +29,7 @@ std::vector<double> poseToVec(const vpHomogeneousMatrix &cMo)
 
 int main(int argc, char **argv)
 {
-#if defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_VIDEOIO) && defined(HAVE_OPENCV_HIGHGUI)
+#if defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_VIDEOIO) && defined(HAVE_OPENCV_HIGHGUI) && (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11) &&  defined(VISP_HAVE_DISPLAY)
   std::string opt_videoname = "model/teabox/teabox.mp4";
   std::string opt_modelname = "model/teabox/teabox.cao";
   int opt_tracker = 0;
@@ -53,34 +51,34 @@ int main(int argc, char **argv)
   std::shared_ptr<vpVideoWriter> writer;
 
   try {
-    for (int i = 0; i < argc; i++) {
-      if (std::string(argv[i]) == "--video") {
+    for (int i = 1; i < argc; i++) {
+      if (std::string(argv[i]) == "--video" && i + 1 < argc) {
         opt_videoname = std::string(argv[++i]);
       }
-      else if (std::string(argv[i]) == "--video-first-frame") {
+      else if (std::string(argv[i]) == "--video-first-frame" && i + 1 < argc) {
         opt_video_first_frame = std::atoi(argv[++i]);
       }
-      else if (std::string(argv[i]) == "--model") {
+      else if (std::string(argv[i]) == "--model" && i + 1 < argc) {
         opt_modelname = std::string(argv[++i]);
       }
-      else if (std::string(argv[i]) == "--tracker") {
+      else if (std::string(argv[i]) == "--tracker" && i + 1 < argc) {
         opt_tracker = atoi(argv[++i]);
       }
-      else if (std::string(argv[i]) == "--downscale-img") {
+      else if (std::string(argv[i]) == "--downscale-img" && i + 1 < argc) {
         opt_downscale_img = std::atoi(argv[++i]);
       }
-      else if (std::string(argv[i]) == "--save") {
+      else if (std::string(argv[i]) == "--save" && i + 1 < argc) {
         opt_save = std::string(argv[++i]);
       }
 #if defined(VISP_HAVE_MINIZ) && defined(VISP_HAVE_WORKING_REGEX)
-      else if (std::string(argv[i]) == "--save-results") {
+      else if (std::string(argv[i]) == "--save-results" && i + 1 < argc) {
         opt_save_results = std::string(argv[++i]);
       }
 #endif
       else if (std::string(argv[i]) == "--plot") {
         opt_plot = true;
       }
-      else if (std::string(argv[i]) == "--dof") {
+      else if (std::string(argv[i]) == "--dof" && i + 6 < argc) {
         for (int j = 0; j < 6; j++) {
           int val = std::atoi(argv[++i]);
           if (val == 0 || val == 1) {
@@ -243,13 +241,7 @@ int main(int argc, char **argv)
       writer->open(O);
     }
 
-#if defined(VISP_HAVE_X11)
-    display = std::make_shared<vpDisplayX>();
-#elif defined(VISP_HAVE_GDI)
-    display = std::make_shared<vpDisplayGDI>();
-#elif defined(HAVE_OPENCV_HIGHGUI)
-    display = std::make_shared<vpDisplayOpenCV>();
-#endif
+    display = vpDisplayFactory::createDisplay();
     if (opt_display_scale_auto) {
       display->setDownScalingFactor(vpDisplay::SCALE_AUTO);
     }

@@ -81,7 +81,7 @@ updateRadiusAccumulator(const vpDataUpdateRadAccum &data, std::vector<float> &ra
   float scalProd = (data.m_rx * gx) + (data.m_ry * gy);
   float scalProd2 = scalProd * scalProd;
   if (scalProd2 >= (data.m_circlePerfectness2 * data.m_r2 * grad2)) {
-    // Look for the Radius Candidate Bin RCB_k to which d_ij is "the closest" will have an additionnal vote
+    // Look for the Radius Candidate Bin RCB_k to which d_ij is "the closest" will have an additional vote
     float r = static_cast<float>(std::sqrt(data.m_r2));
     int r_bin = static_cast<int>(std::floor((r - data.m_minRadius) / data.m_mergingRadiusDiffThresh));
     r_bin = std::min<int>(r_bin, data.m_nbBins - 1);
@@ -139,7 +139,6 @@ vpCircleHoughTransform::computeCircleCandidates()
   nbBins = std::max<int>(static_cast<int>(1), nbBins); // Avoid having 0 bins, which causes segfault
   std::vector<float> radiusAccumList; // Radius accumulator for each center candidates.
   std::vector<float> radiusActualValueList; // Vector that contains the actual distance between the edge points and the center candidates.
-  std::vector<std::vector<std::pair<unsigned int, unsigned int> > > votingPoints(nbBins); // Vectors that contain the points voting for each radius bin
 
   float rmin2 = m_algoParams.m_minRadius * m_algoParams.m_minRadius;
   float rmax2 = m_algoParams.m_maxRadius * m_algoParams.m_maxRadius;
@@ -153,6 +152,7 @@ vpCircleHoughTransform::computeCircleCandidates()
   data.m_recordVotingPoints = m_algoParams.m_recordVotingPoints;
 
   for (size_t i = 0; i < nbCenterCandidates; ++i) {
+    std::vector<std::vector<std::pair<unsigned int, unsigned int> > > votingPoints(nbBins); // Vectors that contain the points voting for each radius bin
     std::pair<float, float> centerCandidate = m_centerCandidatesList[i];
     // Initialize the radius accumulator of the candidate with 0s
     radiusAccumList.clear();

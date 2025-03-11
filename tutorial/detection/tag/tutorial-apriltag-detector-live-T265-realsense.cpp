@@ -10,9 +10,7 @@
 #include <visp3/core/vpImageTools.h>
 #include <visp3/core/vpMeterPixelConversion.h>
 #include <visp3/core/vpPixelMeterConversion.h>
-#include <visp3/gui/vpDisplayGDI.h>
-#include <visp3/gui/vpDisplayOpenCV.h>
-#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayFactory.h>
 #include <visp3/vision/vpPose.h>
 
 int main(int argc, const char **argv)
@@ -36,7 +34,7 @@ int main(int argc, const char **argv)
   unsigned int thickness = 2;
   bool align_frame = false;
 
-#if !(defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
+#if !(defined(VISP_HAVE_DISPLAY))
   bool display_off = true;
   std::cout << "Warning: There is no 3rd party (X11, GDI or openCV) to dislay images..." << std::endl;
 #else
@@ -44,55 +42,62 @@ int main(int argc, const char **argv)
 #endif
 
   for (int i = 1; i < argc; i++) {
-    if (std::string(argv[i]) == "--pose_method" && i + 1 < argc) {
-      poseEstimationMethod = (vpDetectorAprilTag::vpPoseEstimationMethod)atoi(argv[i + 1]);
+    if (std::string(argv[i]) == "--pose-method" && i + 1 < argc) {
+      poseEstimationMethod = (vpDetectorAprilTag::vpPoseEstimationMethod)atoi(argv[++i]);
     }
-    else if (std::string(argv[i]) == "--tag_size" && i + 1 < argc) {
-      tagSize = atof(argv[i + 1]);
+    else if (std::string(argv[i]) == "--tag-size" && i + 1 < argc) {
+      tagSize = atof(argv[++i]);
     }
-    else if (std::string(argv[i]) == "--quad_decimate" && i + 1 < argc) {
-      quad_decimate = (float)atof(argv[i + 1]);
+    else if (std::string(argv[i]) == "--quad-decimate" && i + 1 < argc) {
+      quad_decimate = (float)atof(argv[++i]);
     }
     else if (std::string(argv[i]) == "--nthreads" && i + 1 < argc) {
-      nThreads = atoi(argv[i + 1]);
+      nThreads = atoi(argv[++i]);
     }
-    else if (std::string(argv[i]) == "--display_tag") {
+    else if (std::string(argv[i]) == "--display-tag") {
       display_tag = true;
     }
-    else if (std::string(argv[i]) == "--display_off") {
+    else if (std::string(argv[i]) == "--display-off") {
       display_off = true;
     }
     else if (std::string(argv[i]) == "--color" && i + 1 < argc) {
-      color_id = atoi(argv[i + 1]);
+      color_id = atoi(argv[++i]);
     }
     else if (std::string(argv[i]) == "--thickness" && i + 1 < argc) {
-      thickness = (unsigned int)atoi(argv[i + 1]);
+      thickness = (unsigned int)atoi(argv[++i]);
     }
-    else if (std::string(argv[i]) == "--tag_family" && i + 1 < argc) {
-      tagFamily = (vpDetectorAprilTag::vpAprilTagFamily)atoi(argv[i + 1]);
+    else if (std::string(argv[i]) == "--tag-family" && i + 1 < argc) {
+      tagFamily = (vpDetectorAprilTag::vpAprilTagFamily)atoi(argv[++i]);
     }
-    else if (std::string(argv[i]) == "--z_aligned") {
+    else if (std::string(argv[i]) == "--z-aligned") {
       align_frame = true;
     }
     else if (std::string(argv[i]) == "--help" || std::string(argv[i]) == "-h") {
       std::cout << "Usage: " << argv[0]
-        << " [--tag_size <tag_size in m> (default: 0.053)]"
-        " [--quad_decimate <quad_decimate> (default: 1)]"
-        " [--nthreads <nb> (default: 1)]"
-        " [--pose_method <method> (0: HOMOGRAPHY, 1: HOMOGRAPHY_VIRTUAL_VS, "
-        " 2: DEMENTHON_VIRTUAL_VS, 3: LAGRANGE_VIRTUAL_VS, "
-        " 4: BEST_RESIDUAL_VIRTUAL_VS, 5: HOMOGRAPHY_ORTHOGONAL_ITERATION) (default: 0)]"
-        " [--tag_family <family> (0: TAG_36h11, 1: TAG_36h10 (DEPRECATED), 2: TAG_36ARTOOLKIT (DEPRECATED),"
-        " 3: TAG_25h9, 4: TAG_25h7 (DEPRECATED), 5: TAG_16h5, 6: TAG_CIRCLE21h7, 7: TAG_CIRCLE49h12,"
-        " 8: TAG_CUSTOM48h12, 9: TAG_STANDARD41h12, 10: TAG_STANDARD52h13) (default: 0)]"
-        " [--display_tag] [--z_aligned]";
+        << " [--tag-size <tag_size in m> (default: 0.053)]"
+        << " [--quad-decimate <quad_decimate> (default: 1)]"
+        << " [--nthreads <nb> (default: 1)]"
+        << " [--pose-method <method> (0: HOMOGRAPHY, 1: HOMOGRAPHY_VIRTUAL_VS, "
+        << " 2: DEMENTHON_VIRTUAL_VS, 3: LAGRANGE_VIRTUAL_VS, "
+        << " 4: BEST_RESIDUAL_VIRTUAL_VS, 5: HOMOGRAPHY_ORTHOGONAL_ITERATION) (default: 0)]"
+        << " [--tag-family <family> (0: TAG_36h11, 1: TAG_36h10 (DEPRECATED), 2: TAG_36ARTOOLKIT (DEPRECATED),"
+        << " 3: TAG_25h9, 4: TAG_25h7 (DEPRECATED), 5: TAG_16h5, 6: TAG_CIRCLE21h7, 7: TAG_CIRCLE49h12,"
+        << " 8: TAG_CUSTOM48h12, 9: TAG_STANDARD41h12, 10: TAG_STANDARD52h13) (default: 0)]"
+        << " [--display-tag] [--z-aligned]";
 #if (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
-      std::cout << " [--display_off] [--color <color id>] [--thickness <line thickness>]";
+      std::cout << " [--display-off] [--color <color id>] [--thickness <line thickness>]";
 #endif
-      std::cout << " [--help]" << std::endl;
+      std::cout << " [--help,-h]" << std::endl;
       return EXIT_SUCCESS;
     }
   }
+
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+  std::shared_ptr<vpDisplay> display_left, display_undistort;
+#else
+  vpDisplay *display_left = nullptr;
+  vpDisplay *display_undistort = nullptr;
+#endif
 
   try {
     //! [Construct grabber]
@@ -124,16 +129,13 @@ int main(int argc, const char **argv)
     std::cout << "nThreads : " << nThreads << std::endl;
     std::cout << "Z aligned: " << align_frame << std::endl;
 
-    vpDisplay *display_left = nullptr;
-    vpDisplay *display_undistort = nullptr;
     if (!display_off) {
-#ifdef VISP_HAVE_X11
-      display_left = new vpDisplayX(I_left, 100, 30, "Left image");
-      display_undistort = new vpDisplayX(I_undist, I_left.getWidth(), 30, "Undistorted image");
-#elif defined(VISP_HAVE_GDI)
-      display_left = new vpDisplayGDI(I_left, 100, 30, "Left image");
-#elif defined(HAVE_OPENCV_HIGHGUI)
-      display_left = new vpDisplayOpenCV(I_left, 100, 30, "Left image");
+#if (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11)
+      display_left = vpDisplayFactory::createDisplay(I_left, 100, 30, "Left image");
+      display_undistort = vpDisplayFactory::createDisplay(I_undist, I_left.getWidth(), 30, "Undistorted image");
+#else
+      display_left = vpDisplayFactory::allocateDisplay(I_left, 100, 30, "Left image");
+      display_undistort = vpDisplayFactory::allocateDisplay(I_undist, I_left.getWidth(), 30, "Undistorted image");
 #endif
     }
 
@@ -209,16 +211,22 @@ int main(int argc, const char **argv)
     std::cout << "Mean / Median / Std: " << vpMath::getMean(time_vec) << " ms"
       << " ; " << vpMath::getMedian(time_vec) << " ms"
       << " ; " << vpMath::getStdev(time_vec) << " ms" << std::endl;
-
-    if (!display_off) {
-      delete display_left;
-      delete display_undistort;
-    }
-
   }
   catch (const vpException &e) {
     std::cerr << "Catch an exception: " << e.getMessage() << std::endl;
+  }
+
+#if (VISP_CXX_STANDARD < VISP_CXX_STANDARD_11)
+  if (!display_off) {
+    if (display_left != nullptr) {
+      delete display_left;
+    }
+
+    if (display_undistort != nullptr) {
+      delete display_undistort;
+    }
 }
+#endif
 
   return EXIT_SUCCESS;
 #else

@@ -170,7 +170,11 @@
     "stdfloat": "cpp",
     "text_encoding": "cpp",
     "print": "cpp",
-    "geometry": "cpp"
+    "geometry": "cpp",
+    "matrixd": "cpp",
+    "matrixf": "cpp",
+    "quat": "cpp",
+    "light": "cpp"
   },
   "C_Cpp.vcFormat.indent.namespaceContents": false,
   "editor.formatOnSave": true,
@@ -205,4 +209,7 @@
     {"column": 120, "color": "#ffcc00"}
   ],
   "C_Cpp.default.compilerPath": "/usr/bin/g++",
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
 }

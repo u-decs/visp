@@ -33,9 +33,9 @@
 #
 #############################################################################
 
-project(example-parse-argv)
+cmake_minimum_required(VERSION 3.10)
 
-cmake_minimum_required(VERSION 3.5)
+project(example-parse-argv)
 
 find_package(VISP REQUIRED visp_core visp_io)
 

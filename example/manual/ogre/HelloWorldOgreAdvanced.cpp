@@ -1,7 +1,6 @@
-/****************************************************************************
- *
+/*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,27 +29,37 @@
  *
  * Description:
  * Ogre example.
- *
-*****************************************************************************/
+ */
+
 /*!
   \example HelloWorldOgreAdvanced.cpp
 
   \brief Example that shows how to exploit the vpAROgre class.
-
 */
 
 #include <iostream>
 
+#include <visp3/core/vpConfig.h>
+
+//! [Undef grabber]
+// Comment / uncomment following lines to use the specific 3rd party compatible with your camera
+// #undef VISP_HAVE_V4L2
+// #undef VISP_HAVE_DC1394
+// #undef HAVE_OPENCV_HIGHGUI
+// #undef HAVE_OPENCV_VIDEOIO
+//! [Undef grabber]
+
 #include <visp3/ar/vpAROgre.h>
 #include <visp3/core/vpCameraParameters.h>
-#include <visp3/core/vpConfig.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
 #include <visp3/core/vpImage.h>
 #include <visp3/sensor/vp1394TwoGrabber.h>
 #include <visp3/sensor/vpV4l2Grabber.h>
 
-#if defined(HAVE_OPENCV_VIDEOIO)
-#include <opencv2/videoio.hpp>
+#if (VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)
+#include <opencv2/highgui/highgui.hpp> // for cv::VideoCapture
+#elif (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO)
+#include <opencv2/videoio/videoio.hpp> // for cv::VideoCapture
 #endif
 
 #ifdef ENABLE_VISP_NAMESPACE
@@ -78,6 +87,23 @@ public:
 protected:
   void createScene()
   {
+    mSceneMgr->setAmbientLight(Ogre::ColourValue((float)0.6, (float)0.6, (float)0.6)); // Default value of lightning
+    Ogre::Light *light = mSceneMgr->createLight();
+    light->setDiffuseColour(1.0, 1.0, 1.0);  // scaled RGB values
+    light->setSpecularColour(1.0, 1.0, 1.0); // scaled RGB values
+    // Lumiere ponctuelle
+#if (VISP_HAVE_OGRE_VERSION < (1 << 16 | 10 << 8 | 0))
+    light->setPosition(-5, -5, 10);
+#else
+    Ogre::SceneNode *spotLightNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
+    spotLightNode->attachObject(light);
+    spotLightNode->setPosition(Ogre::Vector3(-5, -5, 10));
+#endif
+    light->setType(Ogre::Light::LT_POINT);
+    light->setAttenuation((Ogre::Real)100, (Ogre::Real)1.0, (Ogre::Real)0.045, (Ogre::Real)0.0075);
+    // Ombres
+    light->setCastShadows(true);
+
     // Create the Entity
     Ogre::Entity *robot = mSceneMgr->createEntity("Robot", "robot.mesh");
     // Attach robot to scene graph
@@ -88,6 +114,8 @@ protected:
     RobotNode->scale((Ogre::Real)0.001, (Ogre::Real)0.001, (Ogre::Real)0.001);
     RobotNode->pitch(Ogre::Degree(180));
     RobotNode->yaw(Ogre::Degree(-90));
+    robot->setCastShadows(true);
+    mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_STENCIL_MODULATIVE);
 
     // The animation
     // Set the good animation
@@ -114,7 +142,9 @@ int main()
 {
   try {
 #if defined(VISP_HAVE_OGRE)
-#if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394) || defined(HAVE_OPENCV_VIDEOIO)
+#if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394) || \
+  ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || \
+  ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
 
     // Image to store gathered data
     // Here we acquire a grey level image. The consequence will be that
@@ -139,7 +169,7 @@ int main()
     // the image size
     grabber.open(I);
     grabber.acquire(I);
-#elif defined(HAVE_OPENCV_VIDEOIO)
+#elif ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI))|| ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
     // OpenCV to gather images
     cv::VideoCapture grabber(0); // open the default camera
     if (!grabber.isOpened()) {   // check if we succeeded
@@ -171,7 +201,7 @@ int main()
       // Acquire a new image
 #if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394)
       grabber.acquire(I);
-#elif defined(HAVE_OPENCV_VIDEOIO)
+#elif ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI))|| ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
       grabber >> frame;
       vpImageConvert::convert(frame, I);
 #endif

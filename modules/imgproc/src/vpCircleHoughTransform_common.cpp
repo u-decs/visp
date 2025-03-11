@@ -91,6 +91,7 @@ vpCircleHoughTransform::~vpCircleHoughTransform()
 using json = nlohmann::json;
 
 vpCircleHoughTransform::vpCircleHoughTransform(const std::string &jsonPath)
+  : mp_mask(nullptr)
 {
   initFromJSON(jsonPath);
 }
@@ -267,8 +268,11 @@ vpCircleHoughTransform::detect(const vpImage<unsigned char> &I)
   m_circleCandidates.clear();
   m_circleCandidatesVotes.clear();
   m_circleCandidatesProbabilities.clear();
+  m_circleCandidatesVotingPoints.clear();
   m_finalCircles.clear();
   m_finalCircleVotes.clear();
+  m_finalCirclesProbabilities.clear();
+  m_finalCirclesVotingPoints.clear();
 
   // Ensuring that the difference between the max and min radii is big enough to take into account
   // the pixelization of the image
@@ -413,6 +417,7 @@ std::ostream &
 operator<<(std::ostream &os, const vpCircleHoughTransform &detector)
 {
   os << detector.toString();
+  std::cout << "\tUse mask: " << (detector.mp_mask == nullptr ? "false" : "true") << std::endl;
   return os;
 }
 
