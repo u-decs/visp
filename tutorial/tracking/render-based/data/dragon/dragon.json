@@ -1,23 +1,25 @@
 {
   "verbose": {
-    "enabled": true
+    "enabled": false
   },
   "camera": {
     "intrinsics": {
       "model": "perspectiveWithoutDistortion",
-      "px": 302.573,
-      "py": 302.396,
-      "u0": 162.776,
-      "v0": 122.475
+      "px": 607.178,
+      "py": 607.234,
+      "u0": 321.391,
+      "v0": 241.918
     },
-    "height": 240,
-    "width": 320
+    "height": 480,
+    "width": 640
   },
   "vvs": {
-    "gain": 2.0,
-    "maxIterations": 10
+    "gain": 1.0,
+    "maxIterations": 10,
+    "mu": 0.1,
+    "muIterFactor": 0.1
   },
-  "model": "data/sequence1/dragon.bam",
+  "model": "data/dragon/dragon.bam",
   "silhouetteExtractionSettings": {
     "threshold": {
       "type": "relative",
@@ -34,7 +36,8 @@
     "bins": 32,
     "objectUpdateRate": 0.1,
     "backgroundUpdateRate": 0.1,
-    "maxDepthError": 0.01
+    "maxDepthError": 0.01,
+    "computeOnlyOnBoundingBox": false
   },
   "drift": {
     "type": "probabilistic",
@@ -45,13 +48,6 @@
     "minDistanceNewPoints": 0.005
   },
   "features": [
-    {
-      "type": "depth",
-      "weight": 0.1,
-      "step": 8,
-      "useMask": true,
-      "minMaskConfidence": 0.7
-    },
     {
       "type": "silhouetteColor",
       "weight": 0.01,
@@ -76,6 +72,29 @@
       "pyramidLevels": 3,
       "quality": 0.01,
       "windowSize": 5
+    },
+    {
+      "type": "silhouetteMe",
+      "weight": 0.1,
+      "numCandidates": 3,
+      "convergencePixelThreshold": 0.0,
+      "convergenceRatio": 1,
+      "movingEdge": {
+        "maskSize": 7,
+        "minSampleStep": 1.0,
+        "mu": [
+          0.5,
+          0.5
+        ],
+        "nMask": 180,
+        "range": 16,
+        "sampleStep": 1.0,
+        "strip": 2,
+        "thresholdType": "normalized",
+        "threshold": 20
+      },
+      "useMask": false,
+      "minMaskConfidence": 0.8
     }
   ]
 }

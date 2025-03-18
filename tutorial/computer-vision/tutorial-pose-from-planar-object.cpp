@@ -186,16 +186,8 @@ std::ostream &operator<<(std::ostream &os, const Model &model)
 std::tuple<vpImage<vpRGBa>, vpImage<uint16_t>, vpCameraParameters, vpCameraParameters, vpHomogeneousMatrix>
 readData(const std::string &input_directory, const unsigned int cpt = 0)
 {
-  char buffer[FILENAME_MAX];
-  std::stringstream ss;
-  ss << input_directory << "/color_image_%04d.jpg";
-  snprintf(buffer, FILENAME_MAX, ss.str().c_str(), cpt);
-  const std::string filename_color = buffer;
-
-  ss.str("");
-  ss << input_directory << "/depth_image_%04d.bin";
-  snprintf(buffer, FILENAME_MAX, ss.str().c_str(), cpt);
-  const std::string filename_depth = buffer;
+  const std::string filename_color = vpIoTools::formatString(input_directory + "/color_image_%04d.jpg", cpt);
+  const std::string filename_depth = vpIoTools::formatString(input_directory + "/depth_image_%04d.bin", cpt);
 
   // Read color
   vpImage<vpRGBa> I_color {};
@@ -218,7 +210,7 @@ readData(const std::string &input_directory, const unsigned int cpt = 0)
   }
 
   // Read camera parameters (intrinsics)
-  ss.str("");
+  std::stringstream ss;
   ss << input_directory << "/camera.xml";
 
   vpXmlParserCamera parser {};
@@ -297,7 +289,7 @@ std::map<Model::Id, vpImagePoint> getKeypointsFromUser(vpImage<vpRGBa> color_img
   disp_color.flush(color_img);
 
   vpImage<vpRGBa> I_help {};
-  vpImageIo::read(I_help, parent_data + "/data/d435_box_keypoints_user_helper.png");
+  vpImageIo::read(I_help, parent_data + "/data/d435_box_keypoints_user_helper.jpg");
   Display disp_help(I_help, disp_color.getWindowXPosition() + color_img.getWidth(), disp_color.getWindowYPosition(),
                     "Keypoints [help]", DispScaleType);
   disp_help.display(I_help);
