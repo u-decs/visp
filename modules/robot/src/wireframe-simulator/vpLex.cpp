@@ -271,24 +271,21 @@ int lex(void)
 {
 lex_loop:
 
-  for (; chtbl[(int)CURC] == SPCT; mysptr++) {
+  for (; chtbl[static_cast<int>(CURC)] == SPCT; mysptr++) {
   }; /* saute les espaces  */
 
-  switch (chtbl[(int)CURC]) {
+  switch (chtbl[static_cast<int>(CURC)]) {
 
   case NULT:
     mytext = mysptr; /* sauvegarde le jeton  */
     mysptr++;
     return (*mytext);
-    break;
   case EOBT:
     next_source();
     goto lex_loop;
-    break;
   case EOFT:
     mytext = mysptr; /* sauvegarde le jeton  */
     return (T_EOF);
-    break;
   case EOLT:
     if (mysptr == lastline)
       next_source();
@@ -297,7 +294,6 @@ lex_loop:
     mylineno++;
     myline = mysptr;
     goto lex_loop;
-    break;
   case CMTT:
     mytext = mysptr; /* sauvegarde le jeton  */
     mysptr++;
@@ -305,17 +301,15 @@ lex_loop:
       return (*mytext);
     mysptr++;
   comment:
-    for (; iscmtt((int)CURC); mysptr++) {
+    for (; iscmtt(static_cast<int>(CURC)); mysptr++) {
     };
-    switch (chtbl[(int)CURC]) {
+    switch (chtbl[static_cast<int>(CURC)]) {
     case EOBT:
       next_source();
       goto comment;
-      break;
     case EOFT:
       lexerr("start", lex_errtbl[E_CMT_EOF], NULL);
       return (T_EOF);
-      break;
     case EOLT:
       if (mysptr == lastline)
         next_source();
@@ -324,7 +318,6 @@ lex_loop:
       mylineno++;
       myline = mysptr;
       goto comment;
-      break;
     case CMTT:
       if (PREVC == '*') { /* veritable fin  */
         mysptr++;
@@ -332,32 +325,30 @@ lex_loop:
       }
       mysptr++; /* pseudo fin     */
       goto comment;
-      break;
     }
     break;
   case IDNT:
     mytext = mysptr; /* sauvegarde le jeton  */
     mysptr++;
-    for (; isidnt((int)CURC); mysptr++) {
+    for (; isidnt(static_cast<int>(CURC)); mysptr++) {
     };
-    mylength = (int)(mysptr - mytext);
+    mylength = static_cast<int>(mysptr - mytext);
     return (get_symbol(mytext, mylength));
-    break;
   case INTT:
     mytext = mysptr; /* sauvegarde le jeton  */
   int_part:
-    myint = (int)(CURC - '0');
+    myint = static_cast<int>(CURC - '0');
     mysptr++;
-    for (; isintt((int)CURC); mysptr++)
-      myint = myint * 10 + (int)(CURC - '0');
+    for (; isintt(static_cast<int>(CURC)); mysptr++)
+      myint = myint * 10 + static_cast<int>(CURC - '0');
     switch (CURC) {
     case '.': /* lecture fraction  */
     float_part:
       mysptr++;
-      for (; isintt((int)CURC); mysptr++) {
+      for (; isintt(static_cast<int>(CURC)); mysptr++) {
       };
       if (CURC != 'E' && CURC != 'e') {
-        myfloat = (float)atof(mytext);
+        myfloat = static_cast<float>(atof(mytext));
         /* FC
         printf("mytext %s, myfloat %f\n",mytext,myfloat);
         */
@@ -367,18 +358,18 @@ lex_loop:
     case 'E': /* lecture exposant  */
     case 'e':
       mysptr++;
-      if (isintt((int)CURC))
+      if (isintt(static_cast<int>(CURC)))
         mysptr++;
-      else if (issgnt((int)CURC) && isintt((int)NEXTC))
+      else if (issgnt(static_cast<int>(CURC)) && isintt(static_cast<int>(NEXTC)))
         mysptr += 2;
       else {
         mysptr--;
-        myfloat = (float)atof(mytext);
+        myfloat = static_cast<float>(atof(mytext));
         return (T_FLOAT);
       }
-      for (; isintt((int)CURC); mysptr++) {
+      for (; isintt(static_cast<int>(CURC)); mysptr++) {
       };
-      myfloat = (float)atof(mytext);
+      myfloat = static_cast<float>(atof(mytext));
       return (T_FLOAT);
       break;
     default:
@@ -391,55 +382,48 @@ lex_loop:
   case FPTT:
     mytext = mysptr; /* sauvegarde le jeton  */
     mysptr++;
-    if (!isintt((int)CURC)) /* pas de fraction  */
+    if (!isintt(static_cast<int>(CURC))) /* pas de fraction  */
       return (*mytext);
     goto float_part;
-    break;
   case SGNT:
     mytext = mysptr; /* sauvegarde le jeton  */
     mysptr++;
-    if (isintt((int)CURC))
+    if (isintt(static_cast<int>(CURC)))
       goto int_part;
-    if (isfptt((int)CURC) && isintt((int)NEXTC))
+    if (isfptt(static_cast<int>(CURC)) && isintt(static_cast<int>(NEXTC)))
       goto float_part;
     return (*mytext);
-    break;
   case STGT:
     mytext = mysptr; /* sauvegarde le jeton  */
     mysptr++;
   string:
-    for (; isstgt((int)CURC); mysptr++) {
+    for (; isstgt(static_cast<int>(CURC)); mysptr++) {
     };
-    switch (chtbl[(int)CURC]) {
+    switch (chtbl[static_cast<int>(CURC)]) {
     case EOBT:
       next_source();
       goto string;
-      break;
     case EOFT:
       lexerr("start", lex_errtbl[E_STG_EOF], NULL);
       return ('\n');
-      break;
     case EOLT:
       lexerr("start", lex_errtbl[E_STG_EOL], NULL);
       return ('\n');
-      break;
     case STGT:
       if (PREVC != '\\') { /* veritable fin  */
         mytext++;
-        mylength = (int)(mysptr - mytext);
+        mylength = static_cast<int>(mysptr - mytext);
         mysptr++;
         return (T_STRING);
       }
       mysptr++; /* pseudo fin     */
       goto string;
-      break;
     }
     break;
   default:
     ECHO;
     mysptr++;
     goto lex_loop;
-    break;
   }
   return (T_EOF);
 }
@@ -461,10 +445,10 @@ lex_loop:
 int lexecho(FILE *f, int token)
 {
 lex_loop:
-  for (; chtbl[(int)CURC] == SPCT; mysptr++) /* saute les espaces  */
+  for (; chtbl[static_cast<int>(CURC)] == SPCT; mysptr++) /* saute les espaces  */
     fwrite(mysptr, 1, 1, f);
 
-  switch (chtbl[(int)CURC]) {
+  switch (chtbl[static_cast<int>(CURC)]) {
 
   case NULT:
     mytext = mysptr; /* sauvegarde le jeton  */
@@ -500,9 +484,9 @@ lex_loop:
     fwrite(mysptr, 1, 1, f);
     mysptr++;
   comment:
-    for (; iscmtt((int)CURC); mysptr++)
+    for (; iscmtt(static_cast<int>(CURC)); mysptr++)
       fwrite(mysptr, 1, 1, f);
-    switch (chtbl[(int)CURC]) {
+    switch (chtbl[static_cast<int>(CURC)]) {
     case EOBT:
       next_source();
       goto comment;
@@ -535,53 +519,53 @@ lex_loop:
   case IDNT:
     mytext = mysptr; /* sauvegarde le jeton  */
     mysptr++;
-    for (; isidnt((int)CURC); mysptr++) {
+    for (; isidnt(static_cast<int>(CURC)); mysptr++) {
     };
-    mylength = (int)(mysptr - mytext);
+    mylength = static_cast<int>(mysptr - mytext);
     if (token != get_symbol(mytext, mylength))
-      fwrite(mytext, (size_t)mylength, 1, f);
+      fwrite(mytext, static_cast<size_t>(mylength), 1, f);
     return (get_symbol(mytext, mylength));
     break;
   case INTT:
     mytext = mysptr; /* sauvegarde le jeton  */
   int_part:
     mysptr++;
-    for (; isintt((int)CURC); mysptr++) {
+    for (; isintt(static_cast<int>(CURC)); mysptr++) {
     };
     switch (CURC) {
     case '.': /* lecture fraction  */
     float_part:
       mysptr++;
-      for (; isintt((int)CURC); mysptr++) {
+      for (; isintt(static_cast<int>(CURC)); mysptr++) {
       };
       if (CURC != 'E' && CURC != 'e') {
         if (token != T_FLOAT)
-          fwrite(mytext, (size_t)(mysptr - mytext), 1, f);
+          fwrite(mytext, static_cast<size_t>(mysptr - mytext), 1, f);
         return (T_FLOAT);
       }
       break;
     case 'E': /* lecture exposant  */
     case 'e':
       mysptr++;
-      if (isintt((int)CURC))
+      if (isintt(static_cast<int>(CURC)))
         mysptr++;
-      else if (issgnt((int)CURC) && isintt((int)NEXTC))
+      else if (issgnt(static_cast<int>(CURC)) && isintt(static_cast<int>(NEXTC)))
         mysptr += 2;
       else {
         mysptr--;
         if (token != T_FLOAT)
-          fwrite(mytext, (size_t)(mysptr - mytext), 1, f);
+          fwrite(mytext, static_cast<size_t>(mysptr - mytext), 1, f);
         return (T_FLOAT);
       }
-      for (; isintt((int)CURC); mysptr++) {
+      for (; isintt(static_cast<int>(CURC)); mysptr++) {
       };
       if (token != T_FLOAT)
-        fwrite(mytext, (size_t)(mysptr - mytext), 1, f);
+        fwrite(mytext, static_cast<size_t>(mysptr - mytext), 1, f);
       return (T_FLOAT);
       break;
     default:
       if (token != T_INT)
-        fwrite(mytext, (size_t)(mysptr - mytext), 1, f);
+        fwrite(mytext, static_cast<size_t>(mysptr - mytext), 1, f);
       return (T_INT);
       break;
     }
@@ -589,7 +573,7 @@ lex_loop:
   case FPTT:
     mytext = mysptr; /* sauvegarde le jeton  */
     mysptr++;
-    if (!isintt((int)CURC)) { /* pas de fraction  */
+    if (!isintt(static_cast<int>(CURC))) { /* pas de fraction  */
       if (token != *mytext)
         fwrite(mytext, 1, 1, f);
       return (*mytext);
@@ -599,9 +583,9 @@ lex_loop:
   case SGNT:
     mytext = mysptr; /* sauvegarde le jeton  */
     mysptr++;
-    if (isintt((int)CURC))
+    if (isintt(static_cast<int>(CURC)))
       goto int_part;
-    if (isfptt((int)CURC) && isintt((int)NEXTC))
+    if (isfptt(static_cast<int>(CURC)) && isintt(static_cast<int>(NEXTC)))
       goto float_part;
     if (token != *mytext)
       fwrite(mytext, 1, 1, f);
@@ -612,9 +596,9 @@ lex_loop:
     mytext = mysptr; /* sauvegarde le jeton  */
     mysptr++;
   string:
-    for (; isstgt((int)CURC); mysptr++)
+    for (; isstgt(static_cast<int>(CURC)); mysptr++)
       fwrite(mysptr, 1, 1, f);
-    switch (chtbl[(int)CURC]) {
+    switch (chtbl[static_cast<int>(CURC)]) {
     case EOBT:
       next_source();
       goto comment;
@@ -631,7 +615,7 @@ lex_loop:
       fwrite(mysptr, 1, 1, f);
       if (PREVC != '\\') { /* veritable fin  */
         mytext++;
-        mylength = (int)(mysptr - mytext);
+        mylength = static_cast<int>(mysptr - mytext);
         mysptr++;
         return (T_STRING);
       }

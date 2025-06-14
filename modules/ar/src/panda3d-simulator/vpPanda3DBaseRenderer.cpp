@@ -53,7 +53,9 @@ const vpHomogeneousMatrix vpPanda3DBaseRenderer::VISP_T_PANDA({
 });
 const vpHomogeneousMatrix vpPanda3DBaseRenderer::PANDA_T_VISP(vpPanda3DBaseRenderer::VISP_T_PANDA.inverse());
 
+const vpHomogeneousMatrix& vpPanda3DBaseRenderer::pandaToVisp() { return VISP_T_PANDA; }
 
+const vpHomogeneousMatrix& vpPanda3DBaseRenderer::vispToPanda() { return PANDA_T_VISP; }
 
 vpPanda3DBaseRenderer::~vpPanda3DBaseRenderer()
 {
@@ -395,6 +397,6 @@ END_VISP_NAMESPACE
 
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work around to avoid warning: libvisp_ar.a(vpPanda3DBaseRenderer.cpp.o) has no symbols
-void dummy_vpPanda3DBaseRenderer() { };
+void dummy_vpPanda3DBaseRenderer() { }
 
 #endif

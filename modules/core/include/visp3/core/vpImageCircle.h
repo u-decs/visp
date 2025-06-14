@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -137,6 +137,21 @@ public:
   * \return The normalized moment \f$n_{11}\f$.
   */
   float get_n11() const;
+
+  /**
+   * \brief Returns true if the image point belongs to the circle and
+   * false otherwise.
+   *
+   * \param[in] ip The image point that we are interested in.
+   * \return true The image point belongs to the circle.
+   * \return false Otherwise.
+   */
+  inline bool isInside(const vpImagePoint &ip) const
+  {
+    float squaredRadius = m_radius * m_radius;
+    float distance = vpImagePoint::sqrDistance(m_center, ip);
+    return distance <= squaredRadius;
+  }
 
 private:
   vpImagePoint m_center;

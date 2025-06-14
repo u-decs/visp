@@ -37,8 +37,11 @@
 
 BEGIN_VISP_NAMESPACE
 
+template class VISP_EXPORT vpDynamicFactory<vpRBFeatureTracker>;
+
 vpRBFeatureTrackerFactory::vpRBFeatureTrackerFactory()
 {
+#ifdef VISP_HAVE_NLOHMANN_JSON
   setJsonKeyFinder([](const nlohmann::json &j) -> std::string {
     return j.at("type");
   });
@@ -64,6 +67,7 @@ vpRBFeatureTrackerFactory::vpRBFeatureTrackerFactory()
     p->loadJsonConfiguration(j);
     return p;
   });
+#endif
 #endif
 }
 

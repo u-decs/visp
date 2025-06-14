@@ -575,6 +575,9 @@ namespace vp = VISP_NAMESPACE_NAME;
 // Defined if _finite (Microsoft version) function is available
 #cmakedefine VISP_HAVE_FUNC__FINITE
 
+// Defined if the fast math compiler options are enabled
+#cmakedefine VISP_HAVE_FAST_MATH
+
 // Defined if round function is available
 #cmakedefine VISP_HAVE_FUNC_ROUND
 
@@ -690,25 +693,6 @@ namespace vp = VISP_NAMESPACE_NAME;
 #  define VISP_LOCAL
 #endif
 
-#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
-// Add the material to produce a warning when deprecated functions are used
-#  ifndef vp_deprecated
-#    if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-#      define vp_deprecated __attribute__((deprecated))
-#    else
-#      define vp_deprecated __declspec(deprecated)
-#    endif
-#  endif
-// Macro to be able to add override keyword
-#  ifndef vp_override
-#   if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1600)
-#     define vp_override override
-#   else
-#     define vp_override
-#   endif
-#  endif
-#endif
-
 // Add the material to produce a warning when deprecated functions are used
 #ifndef VP_DEPRECATED
 #  if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
@@ -738,5 +722,39 @@ namespace vp = VISP_NAMESPACE_NAME;
 #    define VP_EXPLICIT
 #  endif
 #endif
+
+// Macro to be able to add noexcept keyword
+#ifndef VP_NOEXCEPT
+#  if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1600)
+#    define VP_NOEXCEPT noexcept
+#  else
+#    define VP_NOEXCEPT
+#  endif
+#endif
+
+// Macro to be able to add noreturn keyword
+#ifndef VP_NORETURN
+#  if (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1600)
+#    define VP_NORETURN [[noreturn]]
+#  else
+#    define VP_NORETURN
+#  endif
+#endif
+
+// Macro to fix warning with clang-cl : declaration requires an exit-time destructor [-Wexit-time-destructors]
+#ifndef VISP_PYTHON_PREPROCESSOR_RUNNING
+#  ifndef VP_ATTRIBUTE_NO_DESTROY
+#    if defined(__clang__)
+#      if __has_cpp_attribute(clang::no_destroy)
+#        define VP_ATTRIBUTE_NO_DESTROY [[clang::no_destroy]]
+#      else
+#        define VP_ATTRIBUTE_NO_DESTROY
+#      endif
+#    else
+#      define VP_ATTRIBUTE_NO_DESTROY
+#    endif
+#  endif
+#endif
+
 
 #endif

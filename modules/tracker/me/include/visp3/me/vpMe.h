@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,8 +53,10 @@ BEGIN_VISP_NAMESPACE
  * \class vpMe
  * \ingroup module_me
  *
- * This class defines predetermined masks for sites and holds moving edges
+ * This class defines predetermined masks for moving-edges (ME) sites and holds moving edges
  * tracking parameters.
+ *
+ * To know more about moving-edges and their usage for object tracking, follow \ref tutorial-tracking-me.
  *
  * <b>JSON serialization</b>
  *
@@ -175,7 +177,7 @@ public:
 
   /*!
    * Check sample step wrt min value.
-   * \param[inout] sample_step : When this value is lower than the min sample step value,
+   * \param[in,out] sample_step : When this value is lower than the min sample step value,
    * it is modified to the min sample step value.
    */
   void checkSamplestep(double &sample_step)
@@ -191,6 +193,12 @@ public:
    * \return Value of angle step.
    */
   inline unsigned int getAngleStep() const { return m_anglestep; }
+
+  /*!
+   * Return the range used during the initialization step. A negative value means
+   * that the default value is used by the different ME primitives.
+   */
+  inline int getInitRange() const { return m_init_range; }
 
   /*!
    * Get the matrix of the mask.
@@ -293,7 +301,7 @@ public:
   /*!
    * Return the ratio of the initial contrast to use to initialize the contrast threshold of the \b vpMeSite.
    *
-   * \return Value of the likelihood threshold ratio, between 0 and 1.
+   * \return Value of the likelihood threshold ratio, between 0 and 1. A negative value means it is not activated.
    *
    * \sa setThresholdMarginRatio(), setMinThreshold(), getMinThreshold(), getLikelihoodThresholdType(), setLikelihoodThresholdType()
    */
@@ -343,6 +351,14 @@ public:
    * \param anglestep : New angle step value.
    */
   void setAngleStep(const unsigned int &anglestep) { m_anglestep = anglestep; }
+
+  /*!
+   * Set the range used during the initialization step. A negative value means
+   * that the default value is used by the different ME primitives.
+   *
+   * \param initRange : New range, or a negative value to use the default ranges.
+   */
+  inline void setInitRange(const int &initRange) { m_init_range = initRange; }
 
   /*!
    * Set the number of mask applied to determine the object contour. The number
@@ -468,7 +484,9 @@ public:
   /*!
    * Set the the ratio of the initial contrast to use to initialize the contrast threshold of the \b vpMeSite.
    *
-   * \param thresholdMarginRatio Value of the likelihood threshold ratio, between 0 and 1.
+   * \param thresholdMarginRatio Value of the likelihood threshold ratio, between 0 and 1. A negative value means that this
+   * the automatic thresholding is not activated. The threshold of a vpMeSite is computed from the convolution value
+   * computed when initializing the vpMeTracker multiplied by this ratio.
    *
    * \sa getThresholdMarginRatio(), setMinThreshold(), getMinThreshold(), getLikelihoodThresholdType(), setLikelihoodThresholdType()
    */
@@ -484,7 +502,8 @@ public:
   /*!
    * Set the minimum value of the contrast threshold of the \b vpMeSite.
    *
-   * \param minThreshold Minimum value of the contrast threshold.
+   * \param minThreshold Minimum value of the contrast threshold. A negative value means that automatic
+   * thresholding is not activated.
    *
    * \sa getMinThreshold(), setThresholdMarginRatio(), getThresholdMarginRatio(), getLikelihoodThresholdType(), setLikelihoodThresholdType()
    */
@@ -516,6 +535,7 @@ private:
   double m_min_samplestep;
   unsigned int m_anglestep;
   int m_mask_sign;
+  int m_init_range; //! Seek range during the initialization step - a negative value leads to using the default values.
   unsigned int m_range; //! Seek range - on both sides of the reference pixel
   double m_sample_step; //! Distance between sampled points in pixels
   int m_ntotal_sample;
@@ -590,10 +610,22 @@ private:
 };
 
 #ifdef VISP_HAVE_NLOHMANN_JSON
+
+#if defined(__clang__)
+// Mute warning : declaration requires an exit-time destructor [-Wexit-time-destructors]
+// message : expanded from macro 'NLOHMANN_JSON_SERIALIZE_ENUM'
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wexit-time-destructors"
+#endif
+
 NLOHMANN_JSON_SERIALIZE_ENUM(vpMe::vpLikelihoodThresholdType, {
   {vpMe::vpLikelihoodThresholdType::OLD_THRESHOLD, "old"},
   {vpMe::vpLikelihoodThresholdType::NORMALIZED_THRESHOLD, "normalized"}
 });
+
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 inline void to_json(nlohmann::json &j, const vpMe &me)
 {
@@ -605,6 +637,7 @@ inline void to_json(nlohmann::json &j, const vpMe &me)
     {"mu", {me.getMu1(), me.getMu2()}},
     {"minSampleStep", me.getMinSampleStep()},
     {"sampleStep", me.getSampleStep()},
+    {"initRange", me.getInitRange()},
     {"range", me.getRange()},
     {"ntotalSample", me.getNbTotalSample()},
     {"pointsToTrack", me.getPointsToTrack()},
@@ -633,6 +666,7 @@ inline void from_json(const nlohmann::json &j, vpMe &me)
   me.setMinSampleStep(j.value("minSampleStep", me.getMinSampleStep()));
   me.setSampleStep(j.value("sampleStep", me.getSampleStep()));
   me.setRange(j.value("range", me.getRange()));
+  me.setInitRange(j.value("initRange", me.getInitRange()));
   me.setNbTotalSample(j.value("ntotalSample", me.getNbTotalSample()));
   me.setPointsToTrack(j.value("pointsToTrack", me.getPointsToTrack()));
   me.setMaskSize(j.value("maskSize", me.getMaskSize()));

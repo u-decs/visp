@@ -1,5 +1,38 @@
+/*
+ * ViSP, open source Visual Servoing Platform software.
+ * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ *
+ * This software is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * See the file LICENSE.txt at the root directory of this source
+ * distribution for additional information about the GNU GPL.
+ *
+ * For using ViSP with software that can not be combined with the GNU
+ * GPL, please contact Inria about acquiring a ViSP Professional
+ * Edition License.
+ *
+ * See https://visp.inria.fr for more information.
+ *
+ * This software was developed at:
+ * Inria Rennes - Bretagne Atlantique
+ * Campus Universitaire de Beaulieu
+ * 35042 Rennes Cedex
+ * France
+ *
+ * If you have questions regarding the use of this file, please contact
+ * Inria at visp@inria.fr
+ *
+ * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+ * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ */
 //! \example tutorial-rbt-sequence.cpp
+#include <iostream>
 #include <visp3/core/vpConfig.h>
+
+#if defined(VISP_HAVE_NLOHMANN_JSON)
+
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpImageException.h>
 #include <visp3/core/vpIoTools.h>
@@ -21,9 +54,7 @@ using namespace VISP_NAMESPACE_NAME;
 struct CmdArguments
 {
   CmdArguments() : startFrame(-1), frameStep(1), stepByStep(false)
-  {
-
-  }
+  { }
 
   void registerArguments(vpJsonArgumentParser &parser)
   {
@@ -166,7 +197,6 @@ int main(int argc, const char **argv)
     double frameStart = vpTime::measureTimeMs();
     // Acquire images
     for (unsigned int sp = 0; sp < sequenceArgs.frameStep; ++sp) {
-
       readerRGB.acquire(Icol);
       vpImageConvert::convert(Icol, Id);
       if (!sequenceArgs.depthFolder.empty()) {
@@ -179,7 +209,7 @@ int main(int argc, const char **argv)
 #ifdef VISP_HAVE_OPENMP
 #pragma omp parallel for
 #endif
-        for (unsigned int i = 0; i < dataArray.getSize(); ++i) {
+        for (int i = 0; i < static_cast<int>(dataArray.getSize()); ++i) {
           float value = static_cast<float>(dataArray.bitmap[i]) * scale;
           depth.bitmap[i] = value;
           depthDisplay.bitmap[i] = value > baseArgs.maxDepthDisplay ? 0.f : static_cast<unsigned char>((depth.bitmap[i] / baseArgs.maxDepthDisplay) * 255.f);
@@ -189,12 +219,46 @@ int main(int argc, const char **argv)
 
     // Pose tracking
     double trackingStart = vpTime::measureTimeMs();
+    vpRBTrackingResult trackingResult;
     if (depth.getSize() == 0) {
-      tracker.track(Id, Icol);
+      trackingResult = tracker.track(Id, Icol);
     }
     else {
-      tracker.track(Id, Icol, depth);
+      trackingResult = tracker.track(Id, Icol, depth);
     }
+
+    switch (trackingResult.getStoppingReason()) {
+    case vpRBTrackingStoppingReason::EXCEPTION:
+    {
+      std::cout << "Encountered an exception during tracking, pose was not updated" << std::endl;
+      break;
+    }
+    case vpRBTrackingStoppingReason::NOT_ENOUGH_FEATURES:
+    {
+      std::cout << "There were not enough feature to perform tracking" << std::endl;
+      break;
+    }
+    case vpRBTrackingStoppingReason::OBJECT_NOT_IN_IMAGE:
+    {
+      std::cout << "Object is not in image" << std::endl;
+      break;
+    }
+    case vpRBTrackingStoppingReason::CONVERGENCE_CRITERION:
+    {
+      std::cout << "Convergence criterion reached:" << std::endl;
+      std::cout << "- Num iterations: " << trackingResult.getNumIterations() << std::endl;
+      std::cout << "- Convergence criterion: " << *(trackingResult.getConvergenceMetricValues().end() - 1) << std::endl;
+      break;
+    }
+    case vpRBTrackingStoppingReason::MAX_ITERS:
+    {
+      break;
+    }
+    default:
+    {
+    }
+    }
+
     std::cout << "Tracking took " << vpTime::measureTimeMs() - trackingStart << "ms" << std::endl;
 
     if (baseArgs.display) {
@@ -259,3 +323,10 @@ int main(int argc, const char **argv)
 
   return EXIT_SUCCESS;
 }
+
+#else
+int main()
+{
+  std::cout << "This tutorial requires nlohmann_json 3rdparty." << std::endl;
+}
+#endif

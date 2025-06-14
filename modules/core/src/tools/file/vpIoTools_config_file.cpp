@@ -37,11 +37,11 @@
 
 BEGIN_VISP_NAMESPACE
 
-std::string vpIoTools::baseName = "";
-std::string vpIoTools::baseDir = "";
-std::string vpIoTools::configFile = "";
-std::vector<std::string> vpIoTools::configVars = std::vector<std::string>();
-std::vector<std::string> vpIoTools::configValues = std::vector<std::string>();
+VP_ATTRIBUTE_NO_DESTROY std::string vpIoTools::baseName = "";
+VP_ATTRIBUTE_NO_DESTROY std::string vpIoTools::baseDir = "";
+VP_ATTRIBUTE_NO_DESTROY std::string vpIoTools::configFile = "";
+VP_ATTRIBUTE_NO_DESTROY std::vector<std::string> vpIoTools::configVars = std::vector<std::string>();
+VP_ATTRIBUTE_NO_DESTROY std::vector<std::string> vpIoTools::configValues = std::vector<std::string>();
 
 const char vpIoTools::separator =
 #if defined(_WIN32)
@@ -498,7 +498,7 @@ void vpIoTools::readBinaryValueLE(std::ifstream &file, int32_t &int_value)
 
 #ifdef VISP_BIG_ENDIAN
   // Swap bytes order from little endian to big endian
-  int_value = vpEndian::swap32bits((uint32_t)int_value);
+  int_value = vpEndian::swap32bits(static_cast<uint32_t>(int_value));
 #endif
 }
 
@@ -576,7 +576,7 @@ void vpIoTools::writeBinaryValueLE(std::ofstream &file, const int32_t int_value)
 {
 #ifdef VISP_BIG_ENDIAN
   // Swap bytes order to little endian
-  uint32_t swap_int = vpEndian::swap32bits((uint32_t)int_value);
+  uint32_t swap_int = vpEndian::swap32bits(static_cast<uint32_t>(int_value));
   file.write((char *)(&swap_int), sizeof(swap_int));
 #else
   file.write((char *)(&int_value), sizeof(int_value));

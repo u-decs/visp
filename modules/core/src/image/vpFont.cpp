@@ -1,7 +1,6 @@
-/****************************************************************************
- *
+/*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,8 +29,7 @@
  *
  * Description:
  * Draw text in an image.
- *
-*****************************************************************************/
+ */
 // Contains code from:
 /*
  * Simd Library (http://ermig1979.github.io/Simd).
@@ -85,7 +83,9 @@ public:
     \note The font supports ASCII characters only. It was generated on the base of the generic monospace font from
     Gdiplus.
 
-    \param [in] height - initial height value. By default it is equal to 16.
+    \param[in] height : Initial height value. By default it is equal to 16.
+    \param[in] fontFamily : Font family.
+    \param[in] ttfFilename : True type font filename resources.
   */
   Impl(unsigned int height = 16, const vpFontFamily &fontFamily = TRUETYPE_FILE,
        const std::string &ttfFilename = std::string(VISP_RUBIK_REGULAR_FONT_RESOURCES))
@@ -124,6 +124,9 @@ public:
       _fontDescent = vpMath::round(_fontDescent * _fontScale);
 
       break;
+    }
+    default: {
+      throw(vpException(vpException::fatalError, "Unsupported font family in vpFont::Impl constructor"));
     }
     }
   }
@@ -171,6 +174,10 @@ public:
 
     case TRUETYPE_FILE:
       break;
+
+    default: {
+      throw(vpException(vpException::fatalError, "Unsupported font family in vpFont::Impl::Resize()"));
+    }
     }
 
     return true;
@@ -270,9 +277,10 @@ public:
 
       return bb;
     }
+    default: {
+      throw(vpException(vpException::fatalError, "Unsupported font family in vpFont::Impl::Measure()"));
     }
-
-    return Point();
+    }
   }
 
   /*!
@@ -363,6 +371,9 @@ public:
       }
 
       break;
+    }
+    default: {
+      throw(vpException(vpException::fatalError, "Unsupported font family in vpFont::Impl::Draw()"));
     }
     }
 
@@ -476,6 +487,9 @@ public:
       }
 
       break;
+    }
+    default: {
+      throw(vpException(vpException::fatalError, "Unsupported font family in vpFont::Impl::Draw()"));
     }
     }
 
@@ -2570,7 +2584,7 @@ private:
       }
       else if (ch <= 247 && i + 3 < str.size() && (str[i + 1] & 0xc0) == 0x80 && (str[i + 2] & 0xc0) == 0x80 &&
               (str[i + 3] & 0xc0) == 0x80) {
-        int val = (int)(((ch & 15) << 18) | ((str[i + 1] & 63) << 12) | ((str[i + 2] & 63) << 6) | (str[i + 3] & 63));
+        int val = static_cast<int>(((ch & 15) << 18) | ((str[i + 1] & 63) << 12) | ((str[i + 2] & 63) << 6) | (str[i + 3] & 63));
         if (val > 1114111) {
           val = 65533;
         }

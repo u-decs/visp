@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,9 +43,9 @@
 
 #include <visp3/core/vpConfig.h>
 
-#if defined(HAVE_OPENCV_IMGPROC) && \
-  ((VISP_HAVE_OPENCV_VERSION < 0x050000)  && defined(HAVE_OPENCV_CALIB3D) && defined(HAVE_OPENCV_FEATURES2D)) || \
-  ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_3D) && defined(HAVE_OPENCV_FEATURES))
+#if defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && \
+  (((VISP_HAVE_OPENCV_VERSION < 0x050000)  && defined(HAVE_OPENCV_CALIB3D) && defined(HAVE_OPENCV_FEATURES2D)) || \
+   ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_3D) && defined(HAVE_OPENCV_FEATURES)))
 
 #include <visp3/core/vpHomogeneousMatrix.h>
 #include <visp3/core/vpImage.h>
@@ -128,12 +128,10 @@ bool getOptions(int argc, const char **argv, bool &click_allowed, bool &display)
     case 'h':
       usage(argv[0], nullptr);
       return false;
-      break;
 
     default:
       usage(argv[0], optarg_);
       return false;
-      break;
     }
   }
 
@@ -180,7 +178,7 @@ void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_dis
 #ifdef VISP_HAVE_DISPLAY
     display = vpDisplayFactory::allocateDisplay(I, 0, 0, "ORB keypoints matching");
     display->setDownScalingFactor(vpDisplay::SCALE_AUTO);
-    display2 = vpDisplayFactory::allocateDisplay(Imatch, 0, (int)I.getHeight() / vpDisplay::getDownScalingFactor(I) + 40, "ORB keypoints matching");
+    display2 = vpDisplayFactory::allocateDisplay(Imatch, 0, static_cast<int>(I.getHeight()) / vpDisplay::getDownScalingFactor(I) + 40, "ORB keypoints matching");
     display2->setDownScalingFactor(vpDisplay::SCALE_AUTO);
 #else
     std::cout << "No image viewer is available..." << std::endl;
@@ -241,7 +239,9 @@ void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_dis
   cv::Ptr<cv::DescriptorExtractor> extractor;
   cv::Ptr<cv::DescriptorMatcher> matcher;
 
-#if ((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_FEATURES2D)) || ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_FEATURES))
+#if defined(VISP_HAVE_OPENCV) && \
+    (((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_FEATURES2D)) || \
+     ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_FEATURES)))
 #if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
   detector = cv::ORB::create(500, 1.2f, 1);
   extractor = cv::ORB::create(500, 1.2f, 1);
@@ -273,7 +273,7 @@ void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_dis
   cv::Mat trainDescriptors;
   extractor->compute(matImg, trainKeyPoints, trainDescriptors);
 
-  if (trainKeyPoints.size() != (size_t)trainDescriptors.rows || trainKeyPoints.size() != points3f.size()) {
+  if (trainKeyPoints.size() != static_cast<size_t>(trainDescriptors.rows) || trainKeyPoints.size() != points3f.size()) {
     throw(vpException(vpException::fatalError, "Problem with training data size !"));
   }
 
@@ -310,12 +310,12 @@ void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_dis
 
     vpPose estimated_pose;
     for (std::vector<cv::DMatch>::const_iterator it = matches.begin(); it != matches.end(); ++it) {
-      vpPoint pt(points3f[(size_t)(it->trainIdx)].x, points3f[(size_t)(it->trainIdx)].y,
-        points3f[(size_t)(it->trainIdx)].z);
+      vpPoint pt(points3f[static_cast<size_t>(it->trainIdx)].x, points3f[static_cast<size_t>(it->trainIdx)].y,
+        points3f[static_cast<size_t>(it->trainIdx)].z);
 
       double x = 0.0, y = 0.0;
-      vpPixelMeterConversion::convertPoint(cam, queryKeyPoints[(size_t)(it->queryIdx)].pt.x,
-        queryKeyPoints[(size_t)(it->queryIdx)].pt.y, x, y);
+      vpPixelMeterConversion::convertPoint(cam, queryKeyPoints[static_cast<size_t>(it->queryIdx)].pt.x,
+        queryKeyPoints[static_cast<size_t>(it->queryIdx)].pt.y, x, y);
       pt.set_x(x);
       pt.set_y(y);
 
@@ -347,9 +347,9 @@ void run_test(const std::string &env_ipath, bool opt_click_allowed, bool opt_dis
       Imatch.insert(I, vpImagePoint(0, Iref.getWidth()));
       vpDisplay::display(Imatch);
       for (std::vector<cv::DMatch>::const_iterator it = matches.begin(); it != matches.end(); ++it) {
-        vpImagePoint leftPt(trainKeyPoints[(size_t)it->trainIdx].pt.y, trainKeyPoints[(size_t)it->trainIdx].pt.x);
-        vpImagePoint rightPt(queryKeyPoints[(size_t)it->queryIdx].pt.y,
-          queryKeyPoints[(size_t)it->queryIdx].pt.x + Iref.getWidth());
+        vpImagePoint leftPt(trainKeyPoints[static_cast<size_t>(it->trainIdx)].pt.y, trainKeyPoints[static_cast<size_t>(it->trainIdx)].pt.x);
+        vpImagePoint rightPt(queryKeyPoints[static_cast<size_t>(it->queryIdx)].pt.y,
+          queryKeyPoints[static_cast<size_t>(it->queryIdx)].pt.x + Iref.getWidth());
         vpDisplay::displayLine(Imatch, leftPt, rightPt, vpColor::green);
       }
 

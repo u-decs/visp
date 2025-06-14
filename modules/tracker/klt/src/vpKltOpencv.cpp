@@ -145,8 +145,8 @@ void vpKltOpencv::track(const cv::Mat &I)
                            m_pyrMaxLevel, m_termcrit, flags, m_minEigThreshold);
 
   // Remove points that are lost
-  for (int i = (int)status.size() - 1; i >= 0; i--) {
-    if (status[(size_t)i] == 0) { // point is lost
+  for (int i = static_cast<int>(status.size()) - 1; i >= 0; i--) {
+    if (status[static_cast<size_t>(i)] == 0) { // point is lost
       m_points[0].erase(m_points[0].begin() + i);
       m_points[1].erase(m_points[1].begin() + i);
       m_points_id.erase(m_points_id.begin() + i);
@@ -156,13 +156,13 @@ void vpKltOpencv::track(const cv::Mat &I)
 
 void vpKltOpencv::getFeature(const int &index, long &id, float &x, float &y) const
 {
-  if ((size_t)index >= m_points[1].size()) {
+  if (static_cast<size_t>(index) >= m_points[1].size()) {
     throw(vpException(vpException::badValue, "Feature [%d] doesn't exist", index));
   }
 
-  x = m_points[1][(size_t)index].x;
-  y = m_points[1][(size_t)index].y;
-  id = m_points_id[(size_t)index];
+  x = m_points[1][static_cast<size_t>(index)].x;
+  y = m_points[1][static_cast<size_t>(index)].y;
+  id = m_points_id[static_cast<size_t>(index)];
 }
 
 void vpKltOpencv::display(const vpImage<unsigned char> &I, const vpColor &color, unsigned int thickness) const
@@ -314,7 +314,7 @@ void vpKltOpencv::addFeature(const cv::Point2f &f)
 
 void vpKltOpencv::suppressFeature(const int &index)
 {
-  if ((size_t)index >= m_points[1].size()) {
+  if (static_cast<size_t>(index) >= m_points[1].size()) {
     throw(vpException(vpException::badValue, "Feature [%d] doesn't exist", index));
   }
 
@@ -328,12 +328,12 @@ END_VISP_NAMESPACE
 class VISP_EXPORT dummy_vpKltOpencv
 {
 public:
-  dummy_vpKltOpencv() { };
+  dummy_vpKltOpencv() { }
 };
 
 #if !defined(VISP_BUILD_SHARED_LIBS)
 // Work around to avoid warning: libvisp_klt.a(vpKltOpenCV.cpp.o) has no symbols
-void dummy_vpKltOpenCV_fct() { };
+void dummy_vpKltOpenCV_fct() { }
 #endif
 
 #endif

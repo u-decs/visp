@@ -42,9 +42,9 @@
 
 #include <visp3/core/vpConfig.h>
 
-#if defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO) && \
-  ((VISP_HAVE_OPENCV_VERSION < 0x050000)  && defined(HAVE_OPENCV_CALIB3D) && defined(HAVE_OPENCV_FEATURES2D)) || \
-  ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_3D) && defined(HAVE_OPENCV_FEATURES))
+#if defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO) && \
+  (((VISP_HAVE_OPENCV_VERSION < 0x050000)  && defined(HAVE_OPENCV_CALIB3D) && defined(HAVE_OPENCV_FEATURES2D)) || \
+   ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_3D) && defined(HAVE_OPENCV_FEATURES)))
 
 #include <visp3/core/vpException.h>
 #include <visp3/core/vpImage.h>
@@ -60,13 +60,17 @@
 using namespace VISP_NAMESPACE_NAME;
 #endif
 
-/*!
 
+void usage(const char *name, const char *badparam, const std::string &opath, const std::string &user);
+bool getOptions(int argc, const char **argv, std::string &opath, const std::string &user);
+bool compareKeyPoints(const std::vector<cv::KeyPoint> &keypoints1, const std::vector<cv::KeyPoint> &keypoints2);
+bool compareDescriptors(const cv::Mat &descriptors1, const cv::Mat &descriptors2);
+
+/*!
   Print the program options.
 
   \param name : Program name.
   \param badparam : Bad parameter name.
-
 */
 void usage(const char *name, const char *badparam, const std::string &opath, const std::string &user)
 {
@@ -95,7 +99,6 @@ OPTIONS:                                               \n\
 }
 
 /*!
-
   Set the program options.
 
   \param argc : Command line number of parameters.
@@ -103,7 +106,6 @@ OPTIONS:                                               \n\
   \param opath : Output image path.
   \param user : Username.
   \return false if the program has to be stopped, true otherwise.
-
 */
 bool getOptions(int argc, const char **argv, std::string &opath, const std::string &user)
 {
@@ -122,14 +124,11 @@ bool getOptions(int argc, const char **argv, std::string &opath, const std::stri
     case 'h':
       usage(argv[0], nullptr, opath, user);
       return false;
-      break;
 
     default:
       usage(argv[0], optarg_, opath, user);
       return false;
-      break;
       return false;
-      break;
     }
   }
 
@@ -317,7 +316,7 @@ template <typename Type> void run_test(const std::string &env_ipath, const std::
     std::vector<cv::KeyPoint> trainKeyPoints;
     keyPoints.getTrainKeyPoints(trainKeyPoints);
     cv::Mat trainDescriptors = keyPoints.getTrainDescriptors();
-    if (trainKeyPoints.empty() || trainDescriptors.empty() || (int)trainKeyPoints.size() != trainDescriptors.rows) {
+    if (trainKeyPoints.empty() || trainDescriptors.empty() || static_cast<int>(trainKeyPoints.size()) != trainDescriptors.rows) {
       throw vpException(vpException::fatalError, "Problem when detecting "
                                                  "keypoints or when "
                                                  "computing descriptors !");
@@ -469,7 +468,9 @@ template <typename Type> void run_test(const std::string &env_ipath, const std::
   }
 
   // Test with floating point descriptor
-#if ((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_XFEATURES2D)) || ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_FEATURES))
+#if defined(VISP_HAVE_OPENCV) && \
+    (((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_XFEATURES2D)) || \
+     ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_FEATURES)))
   {
 #if (VISP_HAVE_OPENCV_VERSION != 0x040504) && (VISP_HAVE_OPENCV_VERSION != 0x040505) && \
     (VISP_HAVE_OPENCV_VERSION != 0x040600) && (VISP_HAVE_OPENCV_VERSION != 0x040700) && \
@@ -490,7 +491,7 @@ template <typename Type> void run_test(const std::string &env_ipath, const std::
     keyPoints.getTrainKeyPoints(trainKeyPoints);
     std::cout << "Get descriptors" << std::endl;
     cv::Mat trainDescriptors = keyPoints.getTrainDescriptors();
-    if (trainKeyPoints.empty() || trainDescriptors.empty() || (int)trainKeyPoints.size() != trainDescriptors.rows) {
+    if (trainKeyPoints.empty() || trainDescriptors.empty() ||static_cast<int>(trainKeyPoints.size()) != trainDescriptors.rows) {
       throw vpException(vpException::fatalError, "Problem when detecting keypoints or when "
                                                  "computing descriptors (SIFT) !");
     }

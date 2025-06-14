@@ -57,6 +57,10 @@
 #include <visp3/vision/vpPose.h>
 
 BEGIN_VISP_NAMESPACE
+namespace
+{
+const unsigned int defaultRange = 0U;
+}
 /*!
   Basic constructor
 */
@@ -174,11 +178,13 @@ void vpMbtDistanceCylinder::setMovingEdge(vpMe *_me)
   \param I : The image.
   \param cMo : The pose of the camera used to initialize the moving edges.
   \param doNotTrack : If true, ME are not tracked.
-  \param mask: Mask image or nullptr if not wanted. Mask values that are set to true are considered in the tracking. To
-  disable a pixel, set false. \return false if an error occur, true otherwise.
+  \param mask : Mask image or nullptr if not wanted. Mask values that are set to true are considered in the tracking. To
+  disable a pixel, set false.
+  \param initRange The range of the ME used during the initialization.
+  \return false if an error occur, true otherwise.
 */
 bool vpMbtDistanceCylinder::initMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo,
-                                           bool doNotTrack, const vpImage<bool> *mask)
+                                           bool doNotTrack, const vpImage<bool> *mask, const int &initRange)
 {
   if (isvisible) {
     // Perspective projection
@@ -218,8 +224,15 @@ bool vpMbtDistanceCylinder::initMovingEdge(const vpImage<unsigned char> &I, cons
     meline2->setMe(me);
 
     //    meline->setDisplay(vpMeSite::RANGE_RESULT);
-    meline1->setInitRange(0);
-    meline2->setInitRange(0);
+    unsigned int initRange_;
+    if (initRange < 0) {
+      initRange_ = defaultRange;
+    }
+    else {
+      initRange_ = static_cast<unsigned int>(initRange);
+    }
+    int oldInitRange = me->getInitRange();
+    me->setInitRange(initRange_);
 
     // Conversion meter to pixels
     vpMeterPixelConversion::convertLine(cam, c->getRho1(), c->getTheta1(), rho1, theta1);
@@ -242,37 +255,37 @@ bool vpMbtDistanceCylinder::initMovingEdge(const vpImage<unsigned char> &I, cons
     // update limits of the melines.
     int marge = /*10*/ 5; // ou 5 normalement
     if (ip11.get_j() < ip12.get_j()) {
-      meline1->jmin = (int)ip11.get_j() - marge;
-      meline1->jmax = (int)ip12.get_j() + marge;
+      meline1->jmin = static_cast<int>(ip11.get_j()) - marge;
+      meline1->jmax = static_cast<int>(ip12.get_j()) + marge;
     }
     else {
-      meline1->jmin = (int)ip12.get_j() - marge;
-      meline1->jmax = (int)ip11.get_j() + marge;
+      meline1->jmin = static_cast<int>(ip12.get_j()) - marge;
+      meline1->jmax = static_cast<int>(ip11.get_j()) + marge;
     }
     if (ip11.get_i() < ip12.get_i()) {
-      meline1->imin = (int)ip11.get_i() - marge;
-      meline1->imax = (int)ip12.get_i() + marge;
+      meline1->imin = static_cast<int>(ip11.get_i()) - marge;
+      meline1->imax = static_cast<int>(ip12.get_i()) + marge;
     }
     else {
-      meline1->imin = (int)ip12.get_i() - marge;
-      meline1->imax = (int)ip11.get_i() + marge;
+      meline1->imin = static_cast<int>(ip12.get_i()) - marge;
+      meline1->imax = static_cast<int>(ip11.get_i()) + marge;
     }
 
     if (ip21.get_j() < ip22.get_j()) {
-      meline2->jmin = (int)ip21.get_j() - marge;
-      meline2->jmax = (int)ip22.get_j() + marge;
+      meline2->jmin = static_cast<int>(ip21.get_j()) - marge;
+      meline2->jmax = static_cast<int>(ip22.get_j()) + marge;
     }
     else {
-      meline2->jmin = (int)ip22.get_j() - marge;
-      meline2->jmax = (int)ip21.get_j() + marge;
+      meline2->jmin = static_cast<int>(ip22.get_j()) - marge;
+      meline2->jmax = static_cast<int>(ip21.get_j()) + marge;
     }
     if (ip21.get_i() < ip22.get_i()) {
-      meline2->imin = (int)ip21.get_i() - marge;
-      meline2->imax = (int)ip22.get_i() + marge;
+      meline2->imin = static_cast<int>(ip21.get_i()) - marge;
+      meline2->imax = static_cast<int>(ip22.get_i()) + marge;
     }
     else {
-      meline2->imin = (int)ip22.get_i() - marge;
-      meline2->imax = (int)ip21.get_i() + marge;
+      meline2->imin = static_cast<int>(ip22.get_i()) - marge;
+      meline2->imax = static_cast<int>(ip21.get_i()) + marge;
     }
 
     // Initialize the tracking
@@ -305,6 +318,7 @@ bool vpMbtDistanceCylinder::initMovingEdge(const vpImage<unsigned char> &I, cons
     }
     catch (...) {
    // vpTRACE("the line can't be initialized");
+      me->setInitRange(oldInitRange);
       return false;
     }
     try {
@@ -312,8 +326,10 @@ bool vpMbtDistanceCylinder::initMovingEdge(const vpImage<unsigned char> &I, cons
     }
     catch (...) {
    // vpTRACE("the line can't be initialized");
+      me->setInitRange(oldInitRange);
       return false;
     }
+    me->setInitRange(oldInitRange);
   }
   return true;
 }
@@ -322,10 +338,13 @@ bool vpMbtDistanceCylinder::initMovingEdge(const vpImage<unsigned char> &I, cons
   Track the moving edges in the image.
 
   \param I : the image.
-  \param cMo : The pose of the camera.
+  \param cMo : The pose of the camera (unused).
 */
-void vpMbtDistanceCylinder::trackMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix & /*cMo*/)
+void vpMbtDistanceCylinder::trackMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo)
 {
+  (void)cMo;
+  int oldInitRange = me->getInitRange();
+  me->setInitRange(defaultRange);
   if (isvisible) {
     try {
       meline1->track(I);
@@ -345,10 +364,11 @@ void vpMbtDistanceCylinder::trackMovingEdge(const vpImage<unsigned char> &I, con
     }
 
     // Update the number of features
-    nbFeaturel1 = (unsigned int)meline1->getMeList().size();
-    nbFeaturel2 = (unsigned int)meline2->getMeList().size();
+    nbFeaturel1 = static_cast<unsigned int>(meline1->getMeList().size());
+    nbFeaturel2 = static_cast<unsigned int>(meline2->getMeList().size());
     nbFeature = nbFeaturel1 + nbFeaturel2;
   }
+  me->setInitRange(oldInitRange);
 }
 
 /*!
@@ -359,6 +379,8 @@ void vpMbtDistanceCylinder::trackMovingEdge(const vpImage<unsigned char> &I, con
 */
 void vpMbtDistanceCylinder::updateMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo)
 {
+  int oldInitRange = me->getInitRange();
+  me->setInitRange(defaultRange);
   if (isvisible) {
     // Perspective projection
     p1->changeFrame(cMo);
@@ -410,37 +432,37 @@ void vpMbtDistanceCylinder::updateMovingEdge(const vpImage<unsigned char> &I, co
     // update limits of the meline.
     int marge = /*10*/ 5; // ou 5 normalement
     if (ip11.get_j() < ip12.get_j()) {
-      meline1->jmin = (int)ip11.get_j() - marge;
-      meline1->jmax = (int)ip12.get_j() + marge;
+      meline1->jmin = static_cast<int>(ip11.get_j()) - marge;
+      meline1->jmax = static_cast<int>(ip12.get_j()) + marge;
     }
     else {
-      meline1->jmin = (int)ip12.get_j() - marge;
-      meline1->jmax = (int)ip11.get_j() + marge;
+      meline1->jmin = static_cast<int>(ip12.get_j()) - marge;
+      meline1->jmax = static_cast<int>(ip11.get_j()) + marge;
     }
     if (ip11.get_i() < ip12.get_i()) {
-      meline1->imin = (int)ip11.get_i() - marge;
-      meline1->imax = (int)ip12.get_i() + marge;
+      meline1->imin = static_cast<int>(ip11.get_i()) - marge;
+      meline1->imax = static_cast<int>(ip12.get_i()) + marge;
     }
     else {
-      meline1->imin = (int)ip12.get_i() - marge;
-      meline1->imax = (int)ip11.get_i() + marge;
+      meline1->imin = static_cast<int>(ip12.get_i()) - marge;
+      meline1->imax = static_cast<int>(ip11.get_i()) + marge;
     }
 
     if (ip21.get_j() < ip22.get_j()) {
-      meline2->jmin = (int)ip21.get_j() - marge;
-      meline2->jmax = (int)ip22.get_j() + marge;
+      meline2->jmin = static_cast<int>(ip21.get_j()) - marge;
+      meline2->jmax = static_cast<int>(ip22.get_j()) + marge;
     }
     else {
-      meline2->jmin = (int)ip22.get_j() - marge;
-      meline2->jmax = (int)ip21.get_j() + marge;
+      meline2->jmin = static_cast<int>(ip22.get_j()) - marge;
+      meline2->jmax = static_cast<int>(ip21.get_j()) + marge;
     }
     if (ip21.get_i() < ip22.get_i()) {
-      meline2->imin = (int)ip21.get_i() - marge;
-      meline2->imax = (int)ip22.get_i() + marge;
+      meline2->imin = static_cast<int>(ip21.get_i()) - marge;
+      meline2->imax = static_cast<int>(ip22.get_i()) + marge;
     }
     else {
-      meline2->imin = (int)ip22.get_i() - marge;
-      meline2->imax = (int)ip21.get_i() + marge;
+      meline2->imin = static_cast<int>(ip22.get_i()) - marge;
+      meline2->imax = static_cast<int>(ip21.get_i()) + marge;
     }
 
     // Initialize the tracking
@@ -484,10 +506,11 @@ void vpMbtDistanceCylinder::updateMovingEdge(const vpImage<unsigned char> &I, co
     }
 
     // Update the numbers of features
-    nbFeaturel1 = (unsigned int)meline1->getMeList().size();
-    nbFeaturel2 = (unsigned int)meline2->getMeList().size();
+    nbFeaturel1 = static_cast<unsigned int>(meline1->getMeList().size());
+    nbFeaturel2 = static_cast<unsigned int>(meline2->getMeList().size());
     nbFeature = nbFeaturel1 + nbFeaturel2;
   }
+  me->setInitRange(oldInitRange);
 }
 
 /*!
@@ -498,7 +521,7 @@ void vpMbtDistanceCylinder::updateMovingEdge(const vpImage<unsigned char> &I, co
 
   \param I : the image.
   \param cMo : The pose of the camera.
-  \param mask: Mask image or nullptr if not wanted. Mask values that are set to true are considered in the tracking. To
+  \param mask : Mask image or nullptr if not wanted. Mask values that are set to true are considered in the tracking. To
   disable a pixel, set false.
 */
 void vpMbtDistanceCylinder::reinitMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo,
@@ -626,16 +649,19 @@ std::vector<std::vector<double> > vpMbtDistanceCylinder::getFeaturesForDisplay()
   - Parameters are: `<primitive id (here 0 for line)>`, `<pt_start.i()>`, `<pt_start.j()>`,
   `<pt_end.i()>`, `<pt_end.j()>`
 
-  \param width, height Image size (unused parameters).
+  \param width : Image width (unused parameter).
+  \param height : Image height (unused parameter).
   \param cMo : Pose used to project the 3D model into the image.
   \param camera : The camera parameters.
   \param displayFullModel : If true, the line is displayed even if it is not
 */
-std::vector<std::vector<double> > vpMbtDistanceCylinder::getModelForDisplay(unsigned int, unsigned int,
+std::vector<std::vector<double> > vpMbtDistanceCylinder::getModelForDisplay(unsigned int width, unsigned int height,
                                                                             const vpHomogeneousMatrix &cMo,
                                                                             const vpCameraParameters &camera,
                                                                             bool displayFullModel)
 {
+  (void)width;
+  (void)height;
   std::vector<std::vector<double> > models;
 
   if ((isvisible && isTrackedCylinder) || displayFullModel) {
@@ -759,8 +785,8 @@ void vpMbtDistanceCylinder::displayMovingEdges(const vpImage<vpRGBa> &I)
 void vpMbtDistanceCylinder::initInteractionMatrixError()
 {
   if (isvisible) {
-    nbFeaturel1 = (unsigned int)meline1->getMeList().size();
-    nbFeaturel2 = (unsigned int)meline2->getMeList().size();
+    nbFeaturel1 = static_cast<unsigned int>(meline1->getMeList().size());
+    nbFeaturel2 = static_cast<unsigned int>(meline2->getMeList().size());
     nbFeature = nbFeaturel1 + nbFeaturel2;
     L.resize(nbFeature, 6);
     error.resize(nbFeature);
@@ -831,8 +857,8 @@ void vpMbtDistanceCylinder::computeInteractionMatrixError(const vpHomogeneousMat
     unsigned int j = 0;
     for (std::list<vpMeSite>::const_iterator it = meline1->getMeList().begin(); it != meline1->getMeList().end();
          ++it) {
-      double x = (double)it->m_j;
-      double y = (double)it->m_i;
+      double x = static_cast<double>(it->m_j);
+      double y = static_cast<double>(it->m_i);
 
       x = (x - xc) * mx;
       y = (y - yc) * my;
@@ -848,15 +874,15 @@ void vpMbtDistanceCylinder::computeInteractionMatrixError(const vpHomogeneousMat
       error[j] = rho1 - (x * co1 + y * si1);
 
       if (disp)
-        vpDisplay::displayCross(I, it->m_i, it->m_j, (unsigned int)(error[j] * 100), vpColor::orange, 1);
+        vpDisplay::displayCross(I, it->m_i, it->m_j, static_cast<unsigned int>(error[j] * 100), vpColor::orange, 1);
 
       j++;
     }
 
     for (std::list<vpMeSite>::const_iterator it = meline2->getMeList().begin(); it != meline2->getMeList().end();
          ++it) {
-      double x = (double)it->m_j;
-      double y = (double)it->m_i;
+      double x = static_cast<double>(it->m_j);
+      double y = static_cast<double>(it->m_i);
 
       x = (x - xc) * mx;
       y = (y - yc) * my;
@@ -872,7 +898,7 @@ void vpMbtDistanceCylinder::computeInteractionMatrixError(const vpHomogeneousMat
       error[j] = rho2 - (x * co2 + y * si2);
 
       if (disp)
-        vpDisplay::displayCross(I, it->m_i, it->m_j, (unsigned int)(error[j] * 100), vpColor::red, 1);
+        vpDisplay::displayCross(I, it->m_i, it->m_j, static_cast<unsigned int>(error[j] * 100), vpColor::red, 1);
 
       j++;
     }

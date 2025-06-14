@@ -3,7 +3,7 @@
 
 #include <visp3/core/vpConfig.h>
 
-#if defined(HAVE_OPENCV_HIGHGUI) && \
+#if defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_HIGHGUI) && \
   ((VISP_HAVE_OPENCV_VERSION < 0x030000) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO)))
 
 #if defined(HAVE_OPENCV_VIDEOIO)
@@ -135,7 +135,7 @@ int main(int argc, const char *argv[])
     cv::Mat frame;
     int i = 0;
     while ((i++ < 20) && !cap.read(frame)) {
-    }; // warm up camera by skiping unread frames
+    } // warm up camera by skiping unread frames
 
     std::cout << "Image size : " << frame.rows << " " << frame.cols << std::endl;
 

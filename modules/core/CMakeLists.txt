@@ -240,8 +240,13 @@ endif()
 
 # Misc: xml, pthread, zlib
 if(USE_XML2)
-  include_directories(${XML2_INCLUDE_DIRS})
-  list(APPEND opt_libs_private ${XML2_LIBRARIES})
+  include_directories(SYSTEM ${LIBXML2_INCLUDE_DIRS})
+  list(APPEND opt_libs_private ${LIBXML2_LIBRARIES})
+  if(USE_ICONV)
+    # Only on windows
+    include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
+    list(APPEND opt_libs_private ${Iconv_LIBRARIES})
+  endif()
 endif()
 
 if(USE_THREADS)
@@ -287,13 +292,13 @@ endif()
 
 if(WITH_PUGIXML)
   # pugixml is private and provides default XML I/O capabilities
-  include_directories(${PUGIXML_INCLUDE_DIRS})
+  include_directories(SYSTEM ${PUGIXML_INCLUDE_DIRS})
   list(APPEND opt_libs_private ${PUGIXML_LIBRARIES})
 endif()
 
 if(WITH_SIMDLIB)
   # Simd lib is private
-  include_directories(${SIMDLIB_INCLUDE_DIRS})
+  include_directories(SYSTEM ${SIMDLIB_INCLUDE_DIRS})
   list(APPEND opt_libs_private ${SIMDLIB_LIBRARIES})
 endif()
 
@@ -319,7 +324,15 @@ vp_module_include_directories(${opt_incs} SYSTEM ${opt_system_incs})
 vp_create_module(${opt_libs})
 vp_create_compat_headers("include/visp3/core/vpConfig.h")
 
-vp_set_source_file_compile_flag(src/image/vpFont.cpp -Wno-misleading-indentation -Wno-float-equal)
+if (UNIX)
+  vp_set_source_file_compile_flag(src/image/vpFont.cpp -Wno-misleading-indentation -Wno-float-equal)
+  vp_set_source_file_compile_flag(src/tools/file/vpIoTools_npy.cpp -Wno-strict-aliasing)
+elseif(MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang") # clang-cl usage
+  vp_set_source_file_compile_flag(src/image/vpFont.cpp -Wno-reserved-identifier -Wno-sign-conversion -Wno-zero-as-null-pointer-constant -Wno-old-style-cast -Wnosign-conversion -Wno-float-equal -Wno-cast-qual -Wno-switch-default -Wno-c++23-extensions -Wno-implicit-fallthrough -Wno-implicit-int-float-conversion -Wno-cast-qual -Wno-comma -Wno-double-promotion)
+  vp_set_source_file_compile_flag(src/tools/file/vpIoTools_npy.cpp -Wno-old-style-cast -Wno-sign-conversion -Wno-switch-default -Wno-sign-conversion -Wno-comma -Wno-zero-as-null-pointer-constant -Wno-tautological-type-limit-compare -Wno-cast-align -Wno-extra-semi-stmt -Wno-missing-prototypes)
+else()
+  vp_set_source_file_compile_flag(src/tools/file/vpIoTools_npy.cpp /wd4333)
+endif()
 
 set(opt_test_incs "")
 set(opt_test_libs "")

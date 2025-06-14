@@ -67,6 +67,8 @@ int main()
 #ifdef ENABLE_VISP_NAMESPACE
   using namespace VISP_NAMESPACE_NAME;
 #endif
+
+#if !defined(VISP_HAVE_FAST_MATH)
   // Test isNaN
   if (vpMath::isNaN(0.0)) {
     std::cerr << "Fail: IsNaN(0.0)=" << vpMath::isNaN(0.0) << " / should be false" << std::endl;
@@ -185,13 +187,14 @@ int main()
     return EXIT_FAILURE;
   }
 
-  if (!vpMath::isFinite(0.0)) {
-    std::cerr << "Fail: vpMath::isFinite(0.0)=" << vpMath::isFinite(0.0) << " / should be true" << std::endl;
-    return EXIT_FAILURE;
-  }
-
   if (vpMath::isFinite(exp(800.))) {
     std::cerr << "Fail: vpMath::isFinite(exp(800.))=" << vpMath::isFinite(exp(800.)) << " / should be false" << std::endl;
+    return EXIT_FAILURE;
+  }
+#endif
+
+  if (!vpMath::isFinite(0.0)) {
+    std::cerr << "Fail: vpMath::isFinite(0.0)=" << vpMath::isFinite(0.0) << " / should be true" << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -370,7 +373,7 @@ int main()
 
   int_value = -70000;
   char_value = vpMath::saturate<char>(int_value);
-  if (char_value != (char)SCHAR_MIN) {
+  if (char_value != static_cast<char>(SCHAR_MIN)) {
     std::cerr << "Fail: vpMath::saturate<char>(-70000)=" << char_value << " / should be " << SCHAR_MIN << std::endl;
     return EXIT_FAILURE;
   }
@@ -384,7 +387,7 @@ int main()
 
   short_value = -30000;
   char_value = vpMath::saturate<char>(short_value);
-  if (char_value != (char)SCHAR_MIN) {
+  if (char_value != static_cast<char>(SCHAR_MIN)) {
     std::cerr << "Fail: vpMath::saturate<char>(-30000)=" << char_value << " / should be " << SCHAR_MIN << std::endl;
     return EXIT_FAILURE;
   }
@@ -405,7 +408,7 @@ int main()
 
   float_value = -10000.1f;
   char_value = vpMath::saturate<char>(float_value);
-  if (char_value != (char)SCHAR_MIN) {
+  if (char_value != static_cast<char>(SCHAR_MIN)) {
     std::cerr << "Fail: vpMath::saturate<char>(-10000.1f)=" << char_value << " / should be " << SCHAR_MIN << std::endl;
     return EXIT_FAILURE;
   }
@@ -419,7 +422,7 @@ int main()
 
   double_value = -10000.1;
   char_value = vpMath::saturate<char>(double_value);
-  if (char_value != (char)SCHAR_MIN) {
+  if (char_value != static_cast<char>(SCHAR_MIN)) {
     std::cerr << "Fail: vpMath::saturate<char>(-10000.1)=" << char_value << " / should be " << SCHAR_MIN << std::endl;
     return EXIT_FAILURE;
   }

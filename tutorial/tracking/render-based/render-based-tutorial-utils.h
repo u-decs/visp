@@ -1,3 +1,32 @@
+/*
+ * ViSP, open source Visual Servoing Platform software.
+ * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ *
+ * This software is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * See the file LICENSE.txt at the root directory of this source
+ * distribution for additional information about the GNU GPL.
+ *
+ * For using ViSP with software that can not be combined with the GNU
+ * GPL, please contact Inria about acquiring a ViSP Professional
+ * Edition License.
+ *
+ * See https://visp.inria.fr for more information.
+ *
+ * This software was developed at:
+ * Inria Rennes - Bretagne Atlantique
+ * Campus Universitaire de Beaulieu
+ * 35042 Rennes Cedex
+ * France
+ *
+ * If you have questions regarding the use of this file, please contact
+ * Inria at visp@inria.fr
+ *
+ * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
+ * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ */
 #ifndef VP_RB_TRACKER_TUTORIAL_HELPER_H
 #define VP_RB_TRACKER_TUTORIAL_HELPER_H
 
@@ -39,10 +68,16 @@ namespace vpRBTrackerTutorial
 using namespace VISP_NAMESPACE_NAME;
 #endif
 
+
+/**
+ * \brief Base Argument parsing
+ * Relies on vpJsonArgumentParser
+*/
 struct BaseArguments
 {
-  BaseArguments() : trackerConfiguration(""), maxDepthDisplay(1.f), display(true), debugDisplay(false), enableRenderProfiling(false) { }
+  BaseArguments() : trackerConfiguration(""), maxDepthDisplay(1.f), verbose(false), display(true), debugDisplay(false), enableRenderProfiling(false) { }
 
+#if defined(VISP_HAVE_NLOHMANN_JSON)
   void registerArguments(vpJsonArgumentParser &parser)
   {
     parser
@@ -51,10 +86,12 @@ struct BaseArguments
       .addArgument("--init-file", initFile, false, "Path to the JSON file containing the 2D/3D correspondences for initialization by click")
       .addArgument("--pose", inlineInit, false, "Initial pose of the object in the camera frame.")
       .addArgument("--max-depth-display", maxDepthDisplay, false, "Maximum depth value, used to scale the depth display")
+      .addFlag("--verbose", verbose, "Log additional information in console")
       .addFlag("--no-display", display, "Disable display windows")
       .addFlag("--debug-display", debugDisplay, "Enable additional displays from the renderer")
       .addFlag("--profile", enableRenderProfiling, "Enable the use of Pstats to profile rendering times");
   }
+#endif
 
   void postProcessArguments()
   {
@@ -62,11 +99,15 @@ struct BaseArguments
       throw vpException(vpException::badValue, "No tracker configuration was specified");
     }
     if (object.empty()) {
-      object = vpIoTools::getName(trackerConfiguration);
-      object.erase(object.end() - 5, object.end());
+
+      object = vpIoTools::getNameWE(trackerConfiguration);
+    }
+    else {
+      modelPath = object;
+      object = vpIoTools::getNameWE(modelPath);
     }
     if (initFile.empty()) {
-      initFile = vpIoTools::getParent(trackerConfiguration) + vpIoTools::separator + object + ".init";
+      initFile = vpIoTools::getParent(modelPath.empty() ? trackerConfiguration : modelPath) + vpIoTools::separator + object + ".init";
     }
 
     if (!display && inlineInit.empty()) {
@@ -90,21 +131,33 @@ struct BaseArguments
 
   std::string trackerConfiguration;
   std::string object;
+  std::string modelPath;
   std::string initFile;
   std::vector<double> inlineInit;
   float maxDepthDisplay;
   vpHomogeneousMatrix cMoInit;
+  bool verbose;
   bool display;
   bool debugDisplay;
   bool enableRenderProfiling;
 };
 
+/**
+ * \brief Experiment data logger
+ *
+ * Relies on nlohmann json for output data logging and OpenCV when saving video
+ *
+ * Json will store the pose of the object in the camera frame (cMo)
+ *
+ *
+*/
 class vpRBExperimentLogger
 {
 public:
   vpRBExperimentLogger() : enabled(false), videoEnabled(false), framerate(30)
   { }
 
+#if defined(VISP_HAVE_NLOHMANN_JSON)
   void registerArguments(vpJsonArgumentParser &parser)
   {
     parser
@@ -112,8 +165,9 @@ public:
       .addArgument("--save-path", folder, false, "Where to save the experiment log. The folder should not exist.")
       .addFlag("--save-video", videoEnabled, "Whether to save the video")
       .addArgument("--video-framerate", framerate, false, "Output video framerate");
-
   }
+
+#endif
 
   void startLog()
   {
@@ -123,15 +177,26 @@ public:
       }
       vpIoTools::makeDirectory(folder);
       if (videoEnabled) {
+#ifdef VISP_HAVE_OPENCV
         videoWriter.setFramerate(framerate);
         videoWriter.setCodec(cv::VideoWriter::fourcc('P', 'I', 'M', '1'));
         videoWriter.setFileName(folder + vpIoTools::separator + "video.mp4");
+#endif
       }
     }
   }
 
-  void logFrame(const vpRBTracker &tracker, unsigned int iter, const vpImage<unsigned char> &I, const vpImage<vpRGBa> &IRGB, const vpImage<unsigned char> &Idepth, const vpImage<unsigned char> &Imask)
+  void logFrame(const vpRBTracker &
+#if defined(VISP_HAVE_NLOHMANN_JSON)
+                tracker
+#endif
+                , unsigned int iter, const vpImage<unsigned char> &I, const vpImage<vpRGBa> &IRGB,
+                const vpImage<unsigned char> &Idepth, const vpImage<unsigned char> &Imask)
   {
+    if (!enabled) {
+      return;
+    }
+
     if (videoEnabled) {
       Iout.resize(IRGB.getHeight() * 2, IRGB.getWidth() * 2);
 
@@ -142,7 +207,7 @@ public:
 #ifdef VISP_HAVE_OPENMP
 #pragma omp parallel for
 #endif
-      for (unsigned int i = 0; i < IRGB.getHeight(); ++i) {
+      for (int i = 0; i < static_cast<int>(IRGB.getHeight()); ++i) {
         memcpy(Iout[i], IgrayOverlay[i], IRGB.getWidth() * sizeof(vpRGBa));
         memcpy(Iout[i] + IRGB.getWidth(), IColOverlay[i], IRGB.getWidth() * sizeof(vpRGBa));
         memcpy(Iout[i + IRGB.getHeight()], IdepthOverlay[i], IRGB.getWidth() * sizeof(vpRGBa));
@@ -156,13 +221,14 @@ public:
         videoWriter.saveFrame(Iout);
       }
     }
-
+#if defined(VISP_HAVE_NLOHMANN_JSON)
     nlohmann::json iterLog;
     vpHomogeneousMatrix cMo;
     tracker.getPose(cMo);
     iterLog["cMo"] = cMo;
 
     log.push_back(iterLog);
+#endif
   }
 
   void close()
@@ -170,9 +236,12 @@ public:
     if (videoEnabled) {
       videoWriter.close();
     }
+
+#if defined(VISP_HAVE_NLOHMANN_JSON)
     std::ofstream f(folder + vpIoTools::separator + "log.json");
     f << log.dump(2) << std::endl;
     f.close();
+#endif
   }
 
 private:
@@ -189,15 +258,22 @@ private:
   unsigned int framerate;
   vpVideoWriter videoWriter;
 
+#if defined(VISP_HAVE_NLOHMANN_JSON)
   nlohmann::json log;
+#endif
 };
 
+/**
+ * \brief Helper class to plot experiment data
+ *
+*/
 class vpRBExperimentPlotter
 {
 public:
 
   vpRBExperimentPlotter() : enabled(false), plotPose(false), plotPose3d(false), plotDivergenceMetrics(false), plotCovariance(false) { }
 
+#if defined(VISP_HAVE_NLOHMANN_JSON)
   void registerArguments(vpJsonArgumentParser &parser)
   {
     parser
@@ -205,8 +281,8 @@ public:
       .addFlag("--plot-position", plotPose3d, "Plot the position of the object in a 3d figure")
       .addFlag("--plot-divergence", plotDivergenceMetrics, "Plot the metrics associated to the divergence threshold computation")
       .addFlag("--plot-cov", plotCovariance, "Plot the pose covariance trace for each feature");
-
   }
+#endif
 
   void postProcessArguments(bool displayEnabled)
   {
@@ -316,6 +392,16 @@ private:
   vpPlot plotter;
 };
 
+
+/**
+ * \brief Create a grid of displays for the RBT
+ *
+ * \param Id Grayscale image
+ * \param Icol Color image
+ * \param depthDisplay Displayable depth image
+ * \param probaDisplay Displayable grayscale image for the mask
+ * \return std::vector<std::shared_ptr<vpDisplay>> a list of displays that should be kept around to display tracking iteration data
+*/
 std::vector<std::shared_ptr<vpDisplay>> createDisplays(
   vpImage<unsigned char> &Id, vpImage<vpRGBa> &Icol,
   vpImage<unsigned char> &depthDisplay, vpImage<unsigned char> &probaDisplay)
@@ -344,6 +430,9 @@ std::vector<std::shared_ptr<vpDisplay>> createDisplays(
   );
 }
 
+/**
+ * \brief Helper to profile render times in Panda3D (these timings may be unreliable when gl-finish is false in Panda3D config)
+*/
 void enableRendererProfiling()
 {
   if (PStatClient::is_connected()) {
@@ -357,12 +446,18 @@ void enableRendererProfiling()
   }
 }
 
+/**
+ * \brief Method to convert a raw normals image into a vpRGBa image, essentially remapping from (-1, 1) to (0, 255)
+ *
+ * \param normalsImage the raw normal image
+ * \param normalDisplayImage the output image, that can be displayed
+*/
 void displayNormals(const vpImage<vpRGBf> &normalsImage, vpImage<vpRGBa> &normalDisplayImage)
 {
 #ifdef VISP_HAVE_OPENMP
 #pragma omp parallel for
 #endif
-  for (unsigned int i = 0; i < normalsImage.getSize(); ++i) {
+  for (int i = 0; i < static_cast<int>(normalsImage.getSize()); ++i) {
     normalDisplayImage.bitmap[i].R = static_cast<unsigned char>((normalsImage.bitmap[i].R + 1.0) * 127.5f);
     normalDisplayImage.bitmap[i].G = static_cast<unsigned char>((normalsImage.bitmap[i].G + 1.0) * 127.5f);
     normalDisplayImage.bitmap[i].B = static_cast<unsigned char>((normalsImage.bitmap[i].B + 1.0) * 127.5f);
@@ -372,13 +467,22 @@ void displayNormals(const vpImage<vpRGBf> &normalsImage, vpImage<vpRGBa> &normal
   vpDisplay::flush(normalDisplayImage);
 }
 
+/**
+ * \brief Display the depth canny information
+ *
+ * The arrows represent the 2D normal of the contour
+ *
+ * \param cannyRawData
+ * \param canny
+ * \param valid
+*/
 void displayCanny(const vpImage<vpRGBf> &cannyRawData,
                   vpImage<unsigned char> &canny, const vpImage<unsigned char> &valid)
 {
 #ifdef VISP_HAVE_OPENMP
 #pragma omp parallel for
 #endif
-  for (unsigned int i = 0; i < cannyRawData.getSize(); ++i) {
+  for (int i = 0; i < static_cast<int>(cannyRawData.getSize()); ++i) {
     //vpRGBf &px = cannyRawData.bitmap[i];
     canny.bitmap[i] = valid.bitmap[i] * 255;
     //canny.bitmap[i] = static_cast<unsigned char>(127.5f + 127.5f * atan(px.B));

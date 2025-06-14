@@ -35,8 +35,9 @@
 
 #include <visp3/core/vpConfig.h>
 
-#if ((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_CALIB3D) && defined(HAVE_OPENCV_FEATURES2D)) || \
-  ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_3D) && defined(HAVE_OPENCV_FEATURES))
+#if defined(VISP_HAVE_OPENCV) && \
+    (((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_CALIB3D) && defined(HAVE_OPENCV_FEATURES2D)) || \
+     ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_3D) && defined(HAVE_OPENCV_FEATURES)))
 
 #include <algorithm> // std::transform
 #include <float.h>   // DBL_MAX
@@ -236,8 +237,8 @@ BEGIN_VISP_NAMESPACE
  *   //Build the reference ORB points.
  *   int nbrRef;
  *   unsigned int height, width;
- *   height = (unsigned int)(corners[1].get_i() - corners[0].get_i());
- *   width = (unsigned int)(corners[1].get_j() - corners[0].get_j());
+ *   height = static_cast<unsigned int>(corners[1].get_i() - corners[0].get_i());
+ *   width = static_cast<unsigned int>(corners[1].get_j() - corners[0].get_j());
  *   nbrRef = keypoint.buildReference(Ireference, corners[0], height, width);
  *
  *   //Then grab another image which represents the current image Icurrent
@@ -249,8 +250,8 @@ BEGIN_VISP_NAMESPACE
  *
  *   //Match points between the reference points and the ORB points computed in the current image.
  *   int nbrMatched;
- *   height = (unsigned int)(corners[1].get_i() - corners[0].get_i());
- *   width = (unsigned int)(corners[1].get_j() - corners[0].get_j());
+ *   height = static_cast<unsigned int>(corners[1].get_i() - corners[0].get_i());
+ *   width = static_cast<unsigned int>(corners[1].get_j() - corners[0].get_j());
  *   nbrMatched = keypoint.matchPoint(Icurrent, corners[0], height, width);
  *
  *   //Display the matched points
@@ -450,7 +451,7 @@ public:
    * \param I : Input reference image.
    * \return The number of detected keypoints in the image \p I.
    */
-  unsigned int buildReference(const vpImage<unsigned char> &I);
+  unsigned int buildReference(const vpImage<unsigned char> &I) VP_OVERRIDE;
 
   /*!
    * Build the reference keypoints list in a region of interest in the image.
@@ -462,7 +463,7 @@ public:
    * \return The number of detected keypoints in the current image I.
    */
   unsigned int buildReference(const vpImage<unsigned char> &I, const vpImagePoint &iP, unsigned int height,
-                              unsigned int width);
+                              unsigned int width) VP_OVERRIDE;
 
   /*!
    * Build the reference keypoints list in a region of interest in the image.
@@ -471,7 +472,7 @@ public:
    * \param rectangle : Rectangle of the region of interest.
    * \return The number of detected keypoints in the current image I.
    */
-  unsigned int buildReference(const vpImage<unsigned char> &I, const vpRect &rectangle);
+  unsigned int buildReference(const vpImage<unsigned char> &I, const vpRect &rectangle) VP_OVERRIDE;
 
   /*!
    * Build the reference keypoints list and compute the 3D position
@@ -863,7 +864,7 @@ public:
    * \param ICurrent : Input current image.
    * \param size : Size of the displayed cross.
    */
-  void display(const vpImage<unsigned char> &IRef, const vpImage<unsigned char> &ICurrent, unsigned int size = 3);
+  void display(const vpImage<unsigned char> &IRef, const vpImage<unsigned char> &ICurrent, unsigned int size = 3) VP_OVERRIDE;
 
   /*!
    * Display the reference keypoints.
@@ -872,7 +873,7 @@ public:
    * \param size : Size of the displayed crosses.
    * \param color : Color of the crosses.
    */
-  void display(const vpImage<unsigned char> &ICurrent, unsigned int size = 3, const vpColor &color = vpColor::green);
+  void display(const vpImage<unsigned char> &ICurrent, unsigned int size = 3, const vpColor &color = vpColor::green) VP_OVERRIDE;
 
   /*!
    * Display the reference and the detected keypoints in the images.
@@ -1223,8 +1224,8 @@ public:
     std::vector<std::pair<cv::KeyPoint, cv::KeyPoint> > matchQueryToTrainKeyPoints(m_filteredMatches.size());
     for (size_t i = 0; i < m_filteredMatches.size(); i++) {
       matchQueryToTrainKeyPoints.push_back(
-          std::pair<cv::KeyPoint, cv::KeyPoint>(m_queryFilteredKeyPoints[(size_t)m_filteredMatches[i].queryIdx],
-                                                m_trainKeyPoints[(size_t)m_filteredMatches[i].trainIdx]));
+          std::pair<cv::KeyPoint, cv::KeyPoint>(m_queryFilteredKeyPoints[static_cast<size_t>(m_filteredMatches[i].queryIdx)],
+                                                m_trainKeyPoints[static_cast<size_t>(m_filteredMatches[i].trainIdx)]));
     }
     return matchQueryToTrainKeyPoints;
   }
@@ -1422,7 +1423,7 @@ public:
    * \param I : Input current image.
    * \return The number of matched keypoints.
    */
-  unsigned int matchPoint(const vpImage<unsigned char> &I);
+  unsigned int matchPoint(const vpImage<unsigned char> &I) VP_OVERRIDE;
 
   /*!
    * Match keypoints detected in a region of interest of the image with those
@@ -1435,7 +1436,7 @@ public:
    * \return The number of matched keypoints.
    */
   unsigned int matchPoint(const vpImage<unsigned char> &I, const vpImagePoint &iP, unsigned int height,
-                          unsigned int width);
+                          unsigned int width) VP_OVERRIDE;
 
   /*!
    * Match keypoints detected in a region of interest of the image with those
@@ -1445,7 +1446,7 @@ public:
    * \param rectangle : Rectangle of the region of interest.
    * \return The number of matched keypoints.
    */
-  unsigned int matchPoint(const vpImage<unsigned char> &I, const vpRect &rectangle);
+  unsigned int matchPoint(const vpImage<unsigned char> &I, const vpRect &rectangle) VP_OVERRIDE;
 
   /*!
    * Match query keypoints with those built in the reference list using buildReference().
@@ -2219,12 +2220,12 @@ private:
    * Initialize method for RANSAC parameters and for detectors, extractors and
    * matcher, and for others parameters.
    */
-  void init();
+  void init() VP_OVERRIDE;
 
   /*!
    * Initialize a keypoint detector based on its name.
    *
-   * \param detectorName : Name of the detector (e.g FAST, SIFT, SURF, etc.).
+   * \param[in] detectorNames : Name of the detector (e.g FAST, SIFT, SURF, etc.).
    */
   void initDetector(const std::string &detectorNames);
 
@@ -2232,14 +2233,14 @@ private:
    * Initialize a list of keypoints detectors if we want to concatenate multiple
    * detectors.
    *
-   * \param detectorNames : List of detector names.
+   * \param[in] detectorNames : List of detector names.
    */
   void initDetectors(const std::vector<std::string> &detectorNames);
 
   /*!
    * Initialize a descriptor extractor based on its name.
    *
-   * \param extractorName : Name of the extractor (e.g SIFT, SURF, ORB, etc.).
+   * \param[in] extractorName : Name of the extractor (e.g SIFT, SURF, ORB, etc.).
    */
   void initExtractor(const std::string &extractorName);
 
@@ -2247,7 +2248,7 @@ private:
    * Initialize a list of descriptor extractors if we want to concatenate
    * multiple extractors.
    *
-   * \param extractorNames : List of extractor names.
+   * \param[in] extractorNames : List of extractor names.
    */
   void initExtractors(const std::vector<std::string> &extractorNames);
 
@@ -2258,23 +2259,23 @@ private:
 
   inline size_t myKeypointHash(const cv::KeyPoint &kp)
   {
-    size_t _Val = 2166136261U, scale = 16777619U;
+    size_t _val = 2166136261U, scale = 16777619U;
     Cv32suf u;
     u.f = kp.pt.x;
-    _Val = (scale * _Val) ^ u.u;
+    _val = (scale * _val) ^ u.u;
     u.f = kp.pt.y;
-    _Val = (scale * _Val) ^ u.u;
+    _val = (scale * _val) ^ u.u;
     u.f = kp.size;
-    _Val = (scale * _Val) ^ u.u;
+    _val = (scale * _val) ^ u.u;
     // As the keypoint angle can be computed for certain type of keypoint only
     // when extracting  the corresponding descriptor, the angle field is not
     // taking into account for the hash
-    //    u.f = kp.angle; _Val = (scale * _Val) ^ u.u;
+    //    u.f = kp.angle; _val = (scale * _val) ^ u.u;
     u.f = kp.response;
-    _Val = (scale * _Val) ^ u.u;
-    _Val = (scale * _Val) ^ ((size_t)kp.octave);
-    _Val = (scale * _Val) ^ ((size_t)kp.class_id);
-    return _Val;
+    _val = (scale * _val) ^ u.u;
+    _val = (scale * _val) ^ (static_cast<size_t>(kp.octave));
+    _val = (scale * _val) ^ (static_cast<size_t>(kp.class_id));
+    return _val;
   }
 
 #if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
@@ -2290,11 +2291,11 @@ private:
     PyramidAdaptedFeatureDetector(const cv::Ptr<cv::FeatureDetector> &detector, int maxLevel = 2);
 
     // TODO implement read/write
-    virtual bool empty() const;
+    virtual bool empty() const VP_OVERRIDE;
 
   protected:
     virtual void detect(cv::InputArray image, CV_OUT std::vector<cv::KeyPoint> &keypoints,
-                        cv::InputArray mask = cv::noArray());
+                        cv::InputArray mask = cv::noArray())  VP_OVERRIDE;
     virtual void detectImpl(const cv::Mat &image, std::vector<cv::KeyPoint> &keypoints,
                             const cv::Mat &mask = cv::Mat()) const;
 

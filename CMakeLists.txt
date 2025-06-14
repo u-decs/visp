@@ -312,6 +312,7 @@ endif()
 
 # --- Python Bindings requirements ---
 VP_OPTION(USE_PYBIND11       pybind11       QUIET    "Include pybind11 to create Python bindings" "" ON)
+VP_OPTION(ALLOW_SYSTEM_PYTHON  "" "" "Allow the use of the system Python interpreter when compiling and installing bindings" "" OFF)
 
 # Minimum tool versions
 set(CMAKE_MINIMUM_VERSION_PYTHON_BINDINGS "3.19.0")
@@ -342,23 +343,25 @@ else()
   set(CXX_STANDARD_NOT_OK_FOR_BINDINGS FALSE)
 endif()
 
-
-
-# Forbid system Python
+# Forbid system Python if override flag is not false
 if(DEFINED ENV{VIRTUAL_ENV} OR DEFINED ENV{CONDA_PREFIX})
   set(_pip_args)
-  set(VISP_PYTHON_IS_SYSTEM_WIDE FALSE)
+  set(VISP_PYTHON_INTERPRETER_ALLOWED TRUE)
 else()
   # First solution: raise an error when cmake will call pip install
   # set(_pip_args "--require-virtualenv") # If this is a system python, throw an error
   if(PYTHON3_FOUND)
-    message(STATUS "The python version that you are using (${PYTHON3_EXECUTABLE}) is the system interpreter.
-    pip packages should not be installed system-wide!
-    Python bindings targets will be deactivated!
-    To reenable them, install conda or virtualenv,
-    delete the CMakeCache file then rerun cmake when inside the virtual environment.
-    ")
-    set(VISP_PYTHON_IS_SYSTEM_WIDE TRUE)
+    if(ALLOW_SYSTEM_PYTHON)
+      set(VISP_PYTHON_INTERPRETER_ALLOWED TRUE)
+    else()
+      message(STATUS "The python version that you are using (${PYTHON3_EXECUTABLE}) is the system interpreter.
+      pip packages should not be installed system-wide!
+      Python bindings targets will be deactivated!
+      To reenable them, install conda or virtualenv, or reconfigure with ALLOW_SYSTEM_PYTHON to true.
+      delete the CMakeCache file then rerun cmake when inside the virtual environment.
+      ")
+      set(VISP_PYTHON_INTERPRETER_ALLOWED FALSE)
+    endif()
   endif()
 endif()
 
@@ -419,23 +422,6 @@ if(OGRE_DIR)
   # replace \ with / especially for windows
   STRING(REGEX REPLACE "\\\\" "/" OGRE_DIR ${OGRE_DIR})
 endif()
-
-# add the path to detect Ogre3D
-if(WIN32)
-  list(APPEND CMAKE_MODULE_PATH "${OGRE_DIR}/cmake")
-  list(APPEND CMAKE_MODULE_PATH "${OGRE_DIR}")
-endif(WIN32)
-
-if(UNIX)
-  list(APPEND CMAKE_MODULE_PATH "${OGRE_DIR}/cmake")
-  list(APPEND CMAKE_MODULE_PATH "${OGRE_DIR}/CMake")
-  list(APPEND CMAKE_MODULE_PATH "${OGRE_DIR}")
-  list(APPEND CMAKE_MODULE_PATH "/usr/local/lib/OGRE/cmake")
-  list(APPEND CMAKE_MODULE_PATH "/usr/lib/OGRE/cmake")
-  list(APPEND CMAKE_MODULE_PATH "/usr/local/lib64/OGRE/cmake")
-  list(APPEND CMAKE_MODULE_PATH "/usr/lib64/OGRE/cmake")
-  list(APPEND CMAKE_MODULE_PATH "/usr/share/OGRE/cmake/modules")
-endif(UNIX)
 
 # ----------------------------------------------------------------------------
 # Check for system libs
@@ -507,7 +493,7 @@ VP_OPTION(BUILD_ANDROID_EXAMPLES  "" "" "Build examples for Android platform"   
 VP_OPTION(INSTALL_ANDROID_EXAMPLES "" "" "Install Android examples"  ""                  OFF IF ANDROID )
 
 # Build python bindings as an option
-VP_OPTION(BUILD_PYTHON_BINDINGS  "" "" "Build Python bindings" "" ON IF (PYTHON3INTERP_FOUND AND USE_PYBIND11 AND NOT CMAKE_NOT_OK_FOR_BINDINGS AND NOT VISP_PYTHON_IS_SYSTEM_WIDE AND NOT PYTHON3_NOT_OK_FOR_BINDINGS AND NOT CXX_STANDARD_NOT_OK_FOR_BINDINGS) )
+VP_OPTION(BUILD_PYTHON_BINDINGS  "" "" "Build Python bindings" "" ON IF (PYTHON3INTERP_FOUND AND USE_PYBIND11 AND NOT CMAKE_NOT_OK_FOR_BINDINGS AND VISP_PYTHON_INTERPRETER_ALLOWED AND NOT PYTHON3_NOT_OK_FOR_BINDINGS AND NOT CXX_STANDARD_NOT_OK_FOR_BINDINGS) )
 VP_OPTION(BUILD_PYTHON_BINDINGS_DOC  "" "" "Build the documentation for the Python bindings" "" ON IF BUILD_PYTHON_BINDINGS )
 
 
@@ -562,7 +548,9 @@ if(ENABLE_SOLUTION_FOLDERS)
 endif()
 
 if(ENABLE_TEST_WITHOUT_DISPLAY)
-  set(OPTION_TO_DESACTIVE_DISPLAY "-d")
+  set(SHORT_OPTION_TO_DISABLE_DISPLAY "-d")
+   # catch does not support passing -d as argument as it is already reserved
+  set(LONG_OPTION_TO_DISABLE_DISPLAY "--no-display")
 endif()
 
 # Check for Inria's robot drivers
@@ -613,7 +601,7 @@ VP_OPTION(USE_ARSDK       ARSDK       QUIET "Include Parrot ARSDK support"     "
 if(USE_ARSDK)
   VP_OPTION(USE_FFMPEG    FFMPEG       ""    "Include ffmpeg support for Parrot Bebop2"  "" ON)
 endif()
-VP_OPTION(USE_FRANKA      Franka      QUIET "Include libfranka SDK support for Franka Emika robots" "" ON IF NOT WINRT AND NOT IOS)
+VP_OPTION(USE_FRANKA      Franka      QUIET "Include libfranka SDK support for Franka robots" "" ON IF NOT WINRT AND NOT IOS)
 # Note: libfranka needs c++14 option to build, but to use the library c++11 is enough.
 # That's why, setting USE_CXX_STANDARD=11 (which is the default) allows to use libfranka.
 VP_OPTION(USE_JACOSDK     JacoSDK     ""    "Include Kinova Jaco SDK support"  "" ON IF NOT MINGW AND NOT APPLE AND NOT WINRT AND NOT IOS)
@@ -637,7 +625,7 @@ VP_OPTION(USE_DIRECTSHOW  DIRECTSHOW  ""    "Include dshow support"            "
 
 VP_OPTION(USE_OPENMP      OpenMP      ""    "Include openmp support"           "" ON)
 VP_OPTION(USE_EIGEN3      Eigen3      QUIET "Include eigen3 support"           "" ON IF NOT WINRT AND NOT IOS)
-VP_OPTION(USE_COIN3D      "Coin3D;MyCoin3D" "" "Include coin3d support"        "" ON IF OPENGL_FOUND AND NOT WINRT AND NOT IOS)
+VP_OPTION(USE_COIN3D      Coin3D      ""    "Include coin3d support"           "" ON IF OPENGL_FOUND AND NOT WINRT AND NOT IOS)
 VP_OPTION(USE_PANDA3D     "MyPanda3D" ""    "Include Panda3D support"          "" ON IF NOT IOS)
 VP_OPTION(USE_YARP        YARP        QUIET "Include yarp support"             "YARP_DIR" ON IF NOT WINRT AND NOT IOS)
 VP_OPTION(USE_OGRE        OGRE        QUIET "Include Ogre3D support"           "OGRE_DIR" ON IF NOT WINRT AND NOT IOS)
@@ -657,21 +645,24 @@ VP_OPTION(USE_SOXT        SOXT        ""    "Include Coin/SoXt support"    "" OF
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 VP_OPTION(USE_THREADS     Threads     ""    "Include std::thread support"  "" ON)
 
-VP_OPTION(USE_XML2        XML2        ""    "Include libxml2 support"      "" ON IF NOT WINRT)
+VP_OPTION(USE_XML2        LibXml2     ""    "Include libxml2 support"      "" ON IF NOT WINRT)
+if(USE_XML2 AND WIN32)
+  # libxml2 needs iconv on windows
+  VP_OPTION(USE_ICONV        Iconv     ""    "Include Iconv support"      "" ON IF NOT WINRT)
+endif()
+
 if(CMAKE_TOOLCHAIN_FILE)
   # Find opencv2.framework for ios and naoqi
   VP_OPTION(USE_OPENCV      "MyOpenCV" QUIET "Include OpenCV support" "OpenCV_DIR;OpenCV_FOUND;OPENCV_FOUND" ON)
 else()
   VP_OPTION(USE_OPENCV      "OpenCV;MyOpenCV" QUIET "Include OpenCV support" "OpenCV_DIR;OpenCV_FOUND;OPENCV_FOUND" ON)
 endif()
-VP_OPTION(USE_ZLIB        "ZLIB;MyZLIB" ""  "Include zlib support"         "" ON IF NOT WINRT AND NOT IOS)
+VP_OPTION(USE_ZLIB        ZLIB         ""    "Include zlib support"         "" ON IF NOT WINRT AND NOT IOS)
 set(X11_ADVANCED "X11_xcb_util_LIB;X11_xcb_util_INCLUDE_PATH;X11_xcb_xfixes_INCLUDE_PATH;X11_xcb_xfixes_LIB")
-VP_OPTION(USE_X11         X11         ""    "Include X11 support"          "${X11_ADVANCED}" ON IF NOT WINRT AND NOT IOS)
-# The native FindGTK2.cmake doesn't consider libgobject-2.0 that is
-# requested by ViSP. That's why we use our FindMyGTK2.cmake
-VP_OPTION(USE_GTK2        MyGTK2       ""    "Include gtk2 support"         "" OFF IF NOT WINRT AND NOT IOS)
-VP_OPTION(USE_JPEG       "JPEG;MyJPEG" ""    "Include jpeg support"         "" ON IF NOT IOS)
-VP_OPTION(USE_PNG        "PNG;MyPNG"   ""    "Include png support"          "" ON IF NOT IOS)
+VP_OPTION(USE_X11         X11          ""    "Include X11 support"          "${X11_ADVANCED}" ON IF NOT WINRT AND NOT IOS)
+VP_OPTION(USE_GTK2        GTK2         ""    "Include gtk2 support"         "" OFF IF NOT WINRT AND NOT IOS)
+VP_OPTION(USE_JPEG        JPEG         ""    "Include jpeg support"         "" ON IF NOT IOS)
+VP_OPTION(USE_PNG         PNG          ""    "Include png support"          "" ON IF NOT IOS)
 # To control Pioneer mobile robots, under UNIX we need Aria and std::threads, rt and dl 3rd party libraries
 VP_OPTION(USE_ARIA        ARIA         ""    "Include aria support"         "" ON IF NOT WINRT AND NOT IOS)
 #VP_OPTION(USE_RT          RT           ""    "Include rt support"           "" ON)
@@ -691,9 +682,15 @@ if(USE_PCL)
   # Using PCL_LIBRARIES works to build visp libraries, embedded examples, demos, tests and tutorials thanks to the
   # components. But when examples, demos, tests and tutorials are build outside ViSP workspace as independent projects
   # that are using ViSP as 3rd-party we lead to build issues due to VTK headers and libraries that are not found.
-  # That's why here, we are using vp_find_pcl() macro that will set PCL_DEPS_INCLUDE_DIRS and PCL_DEPS_LIBRARIES
-  # that contains also VTK material location.
-  vp_find_pcl(PCL_LIBRARIES PCL_DEPS_INCLUDE_DIRS PCL_DEPS_LIBRARIES)
+  # That's why here, we are using vp_find_pcl() macro that will set PCL_DEPS_INCLUDE_DIRS, PCL_DEPS_LIBRARIES
+  # and PCL_DEPS_COMPILE_OPTIONS that contains also VTK material location.
+  # Compile options are needed to overcome this issue https://github.com/lagadic/visp/issues/1681
+  #   Potential runtime error due to aligned malloc mismatch! You likely have to compile your code with AVX enabled
+  #   or define EIGEN_MAX_ALIGN_BYTES=32
+  # Note that according to https://github.com/PointCloudLibrary/pcl/issues/5806#issuecomment-2900397246
+  # it is not a good practice to use PCL_DEFINITIONS and PCL_COMPILE_OPTIONS. The following macro
+  # gets rather compile options from interfaces.
+  vp_find_pcl(PCL_LIBRARIES PCL_DEPS_INCLUDE_DIRS PCL_DEPS_LIBRARIES PCL_DEPS_COMPILE_OPTIONS)
   set(PCL_REQUIRED_COMPONENTS "common;filters;io;visualization;segmentation")
   # Create cmake vars corresponding to pcl components used by ViSP like VISP_HAVE_PCL_COMMON...
   vp_detect_required_pcl_components(PCL_REQUIRED_COMPONENTS)
@@ -803,6 +800,16 @@ if(VISP_CXX_STANDARD LESS VISP_CXX_STANDARD_11)
     message(WARNING "Ogre3D was detected but needs at least c++11 standard compiler flag while you have set c++${USE_CXX_STANDARD}. Thus we disable Ogre3D usage turning USE_OGRE=OFF.")
     unset(USE_OGRE)
     set(USE_OGRE OFF CACHE BOOL "Include Ogre3D support" FORCE)
+  endif()
+  if(USE_FRANKA)
+    message(WARNING "libfranka was detected but needs at least c++11 standard compiler flag while you have set c++${USE_CXX_STANDARD}. Thus we disable libfranka usage turning USE_FRANKA=OFF.")
+    unset(USE_FRANKA)
+    set(USE_FRANKA OFF CACHE BOOL "Include libfranka SDK support for Franka robots" FORCE)
+  endif()
+  if(USE_UR_RTDE)
+    message(WARNING "Universal rtde library was detected but needs at least c++11 standard compiler flag while you have set c++${USE_CXX_STANDARD}. Thus we disable rtde usage turning USE_UR_RTDE=OFF.")
+    unset(USE_UR_RTDE)
+    set(USE_UR_RTDE OFF CACHE BOOL "Include Universal Robot RTDE C++ interface support for UR robots" FORCE)
   endif()
 endif()
 
@@ -1122,7 +1129,7 @@ VP_SET(VISP_HAVE_LAPACK_OPENBLAS TRUE IF (BUILD_MODULE_visp_core AND USE_OPENBLA
 VP_SET(VISP_HAVE_PTHREAD     TRUE IF (BUILD_MODULE_visp_core AND (USE_PTHREAD AND UNIX)))
 
 VP_SET(VISP_HAVE_THREADS     TRUE IF (BUILD_MODULE_visp_core AND USE_THREADS))
-VP_SET(VISP_HAVE_XML2        TRUE IF (BUILD_MODULE_visp_core AND USE_XML2))
+VP_SET(VISP_HAVE_XML2        TRUE IF (BUILD_MODULE_visp_core AND ((USE_XML2 AND WIN32 AND USE_ICONV) OR (USE_XML2 AND NOT WIN32))))
 VP_SET(VISP_HAVE_PCL         TRUE IF (BUILD_MODULE_visp_core AND USE_PCL))
 VP_SET(VISP_HAVE_TENSORRT    TRUE IF (BUILD_MODULE_visp_core AND USE_TENSORRT))
 VP_SET(VISP_HAVE_NLOHMANN_JSON          TRUE IF (BUILD_MODULE_visp_core AND USE_NLOHMANN_JSON))
@@ -1271,6 +1278,8 @@ VP_SET(VISP_HAVE_FUNC__ISNAN TRUE IF HAVE_FUNC__ISNAN) # for header vpConfig.h
 VP_SET(VISP_HAVE_FUNC_ISINF TRUE IF HAVE_FUNC_ISINF) # for header vpConfig.h
 # Find std::isinf function (cmath): https://en.cppreference.com/w/cpp/numeric/math/isinf
 VP_SET(VISP_HAVE_FUNC_STD_ISINF TRUE IF HAVE_FUNC_STD_ISINF) # for header vpConfig.h
+# Macro to indicate if ViSP is build with -fast-math compiler option
+VP_SET(VISP_HAVE_FAST_MATH TRUE IF ENABLE_FAST_MATH) # for header vpConfig.h
 
 # round
 # Find round function (math.h): https://www.cplusplus.com/reference/cmath/round/
@@ -1730,12 +1739,11 @@ if(BUILD_PYTHON_BINDINGS)
   status("    Generated input config:" "${VISP_PYTHON_GENERATED_CONFIG_FILE}")
 else()
   status("    Requirements: ")
-  status("      Python version > ${PYTHON3_MINIMUM_VERSION_PYTHON_BINDINGS}:"     PYTHON3_FOUND AND NOT PYTHON3_NOT_OK_FOR_BINDINGS THEN "ok (ver ${PYTHON3_VERSION_STRING})" ELSE "python not found or too old (${PYTHON3_VERSION_STRING})")
-  status("      Python in Virtual environment or conda:"     VISP_PYTHON_IS_SYSTEM_WIDE THEN "failed" ELSE "ok")
+  status("      Python version > ${PYTHON3_MINIMUM_VERSION_PYTHON_BINDINGS}:" PYTHON3_FOUND AND NOT PYTHON3_NOT_OK_FOR_BINDINGS THEN "ok (ver ${PYTHON3_VERSION_STRING})" ELSE "python not found or too old (${PYTHON3_VERSION_STRING})")
+  status("      Python in virtual env. or conda (or system with override):" VISP_PYTHON_INTERPRETER_ALLOWED THEN "failed" ELSE "ok")
   status("      Pybind11 found:"     USE_PYBIND11 THEN "ok" ELSE "failed")
-  status("      CMake > ${CMAKE_MINIMUM_VERSION_PYTHON_BINDINGS}:"     CMAKE_NOT_OK_FOR_BINDINGS THEN "failed (${CMAKE_VERSION})" ELSE "ok (${CMAKE_VERSION})")
-  status("      C++ standard > ${VISP_CXX_STANDARD_17}:"     CXX_STANDARD_NOT_OK_FOR_BINDINGS THEN "failed (${VISP_CXX_STANDARD})" ELSE "ok (${VISP_CXX_STANDARD})")
-
+  status("      CMake > ${CMAKE_MINIMUM_VERSION_PYTHON_BINDINGS}:" CMAKE_NOT_OK_FOR_BINDINGS THEN "failed (${CMAKE_VERSION})" ELSE "ok (${CMAKE_VERSION})")
+  status("      C++ standard > ${VISP_CXX_STANDARD_17}:" CXX_STANDARD_NOT_OK_FOR_BINDINGS THEN "failed (${VISP_CXX_STANDARD})" ELSE "ok (${VISP_CXX_STANDARD})")
 endif()
 
 
@@ -1835,7 +1843,7 @@ status("    Use pololu (built-in):"  WITH_POLOLU      THEN "yes (ver ${POLOLU_VE
 status("")
 status("  GUI: ")
 status("    Use X11:"                USE_X11          THEN "yes" ELSE "no")
-status("    Use GTK:"                USE_GTK2         THEN "yes (ver ${GTK2_VERSION})" ELSE "no")
+status("    Use GTK2:"               USE_GTK2         THEN "yes (ver ${GTK2_VERSION})" ELSE "no")
 status("    Use OpenCV:"             USE_OPENCV       THEN "yes (ver ${OpenCV_VERSION})" ELSE "no")
 status("    Use GDI:"                USE_GDI          THEN "yes" ELSE "no")
 status("    Use Direct3D:"           USE_DIRECT3D     THEN "yes" ELSE "no")
@@ -1879,7 +1887,10 @@ status("")
 status("  Misc: ")
 status("    Use Clipper (built-in):"  WITH_CLIPPER     THEN "yes (ver ${CLIPPER_VERSION})" ELSE "no")
 status("    Use pugixml (built-in):"  WITH_PUGIXML     THEN "yes (ver ${PUGIXML_VERSION})" ELSE "no")
-status("    Use libxml2:"             USE_XML2         THEN "yes (ver ${XML2_VERSION_STRING})" ELSE "no")
+status("    Use libxml2:"             USE_XML2         THEN "yes (ver ${LIBXML2_VERSION_STRING})" ELSE "no")
+if(WIN32)
+status("    \\- Use Iconv:"           USE_ICONV        THEN "yes (ver ${Iconv_VERSION})" ELSE "no")
+endif()
 if(VISP_HAVE_NLOHMANN_JSON_FROM_VTK)
 status("    Use json (nlohmann vtk):"     USE_NLOHMANN_JSON THEN "yes (ver ${VTK_NLOHMANN_JSON_VERSION})" ELSE "no")
 else()

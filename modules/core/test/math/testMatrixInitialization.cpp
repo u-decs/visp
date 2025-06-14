@@ -43,6 +43,11 @@
 using namespace VISP_NAMESPACE_NAME;
 #endif
 
+bool equal(const vpArray2D<double> &a1, const vpArray2D<double> &a2, double epsilon);
+bool equal(const vpRotationVector &a1, const vpRotationVector &a2, double epsilon);
+bool equal(const vpColVector &a1, const vpColVector &a2, double epsilon);
+bool equal(const vpRowVector &a1, const vpRowVector &a2, double epsilon);
+
 bool equal(const vpArray2D<double> &a1, const vpArray2D<double> &a2, double epsilon)
 {
   if (a1.size() != a2.size()) {
@@ -515,6 +520,27 @@ int main()
       R << 0, 0, -1, 0, -1, 0, -1, 0, 0;
       std::cout << "R:\n" << R << std::endl;
       if (!equal(R_ref, R, epsilon)) {
+        return EXIT_FAILURE;
+      }
+    }
+
+    { // Test that a matrix view is copied through copy operator
+      double data[4];
+      for (size_t i = 0; i < 4; ++i) {
+        data[i] = i;
+      }
+      vpMatrix m = vpMatrix::view(data, 2, 2);
+      std::cout << "M = " << m << std::endl;
+      vpMatrix m1;
+      m1 = m;
+
+      if (!equal(m1, m, epsilon) || m.data == m1.data) {
+        return EXIT_FAILURE;
+      }
+
+      vpMatrix m2 = m;
+
+      if (!equal(m2, m, epsilon) || m.data == m2.data) {
         return EXIT_FAILURE;
       }
     }

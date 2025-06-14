@@ -137,7 +137,6 @@ class HeaderFile():
     # Includes that should be appended at the start of every file
     forced_includes = [
       'visp3/core/vpConfig.h', # Always include vpConfig: ensure that VISP macros are correctly defined
-      'opencv2/opencv_modules.hpp'
     ]
     for include in forced_includes:
       tmp_file_content.append(f'#include <{include}>\n')
@@ -467,7 +466,7 @@ class HeaderFile():
       # See https://github.com/pybind/pybind11/issues/974
       # Update with overloads that are shadowed by new overloads defined in this class
       # For instance, declaring:
-      # class A { void foo(int); };
+      # class A { void foo(int); }
       # class B: public A { void foo(std::string& s); }
       # Will result in the following code generating an error:
       # from visp.core import B
@@ -545,7 +544,7 @@ class HeaderFile():
           logging.info(f'Found field in class/struct {name_cpp}: {field_type} {field.name}')
 
           def_str = 'def_'
-          def_str += 'readonly' if field.type.const else 'readwrite'
+          def_str += 'readonly' if (field.type.const or field.constexpr) else 'readwrite'
           if field.static:
             def_str += '_static'
 

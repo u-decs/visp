@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -592,7 +592,7 @@ public:
   virtual void track(std::map<std::string, const vpImage<unsigned char> *> &mapOfImages);
   virtual void track(std::map<std::string, const vpImage<vpRGBa> *> &mapOfColorImages);
 
-#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_SEGMENTATION) && defined(VISP_HAVE_PCL_FILTERS) && defined(VISP_HAVE_PCL_COMMON)
   virtual void track(std::map<std::string, const vpImage<unsigned char> *> &mapOfImages,
     std::map<std::string, pcl::PointCloud<pcl::PointXYZ>::ConstPtr> &mapOfPointClouds);
   virtual void track(std::map<std::string, const vpImage<vpRGBa> *> &mapOfColorImages,
@@ -645,7 +645,7 @@ protected:
   virtual void loadConfigFileJSON(const std::string &configFile, bool verbose = true);
 #endif
 
-#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_SEGMENTATION) && defined(VISP_HAVE_PCL_FILTERS) && defined(VISP_HAVE_PCL_COMMON)
   virtual void preTracking(std::map<std::string, const vpImage<unsigned char> *> &mapOfImages,
     std::map<std::string, pcl::PointCloud<pcl::PointXYZ>::ConstPtr> &mapOfPointClouds);
 #endif
@@ -741,7 +741,7 @@ private:
 
     virtual void track(const vpImage<unsigned char> &I) VP_OVERRIDE;
     virtual void track(const vpImage<vpRGBa> &I_color) VP_OVERRIDE;
-#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_SEGMENTATION) && defined(VISP_HAVE_PCL_FILTERS) && defined(VISP_HAVE_PCL_COMMON)
     // Fix error: using declaration ‘using vpMbDepthDenseTracker::setPose’ conflicts with a previous
     // using declaration that occurs with g++ 4.6.3 on Ubuntu 12.04
 #if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 6))
@@ -749,8 +749,7 @@ private:
 #endif
     using vpMbDepthDenseTracker::track;
     using vpMbEdgeTracker::track;
-    virtual void track(const vpImage<unsigned char> *const ptr_I,
-      const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &point_cloud);
+    virtual void track(const vpImage<unsigned char> *const ptr_I, const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &point_cloud);
 #endif
 
   protected:
@@ -774,7 +773,7 @@ private:
 
     virtual void initMbtTracking(const vpImage<unsigned char> *const ptr_I);
 
-#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_SEGMENTATION) && defined(VISP_HAVE_PCL_FILTERS) && defined(VISP_HAVE_PCL_COMMON)
     virtual void postTracking(const vpImage<unsigned char> *const ptr_I,
       const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &point_cloud);
     virtual void preTracking(const vpImage<unsigned char> *const ptr_I,
@@ -793,7 +792,7 @@ private:
       const std::string &cad_name, const vpHomogeneousMatrix &cMo, bool verbose = false,
       const vpHomogeneousMatrix &T = vpHomogeneousMatrix());
 
-#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_SEGMENTATION) && defined(VISP_HAVE_PCL_FILTERS) && defined(VISP_HAVE_PCL_COMMON)
     // Fix error: using declaration ‘using vpMbDepthDenseTracker::track’ conflicts with a previous
     // using declaration that occurs with g++ 4.6.3 on Ubuntu 12.04
 #if !((__GNUC__ == 4) && (__GNUC_MINOR__ == 6))
@@ -854,6 +853,13 @@ protected:
 
 #define MBT_JSON_SETTINGS_VERSION "1.0"
 
+#if defined(__clang__)
+// Mute warning : declaration requires an exit-time destructor [-Wexit-time-destructors]
+// message : expanded from macro 'NLOHMANN_JSON_SERIALIZE_ENUM'
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wexit-time-destructors"
+#endif
+
 // Serialize tracker type enumeration
 #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
 NLOHMANN_JSON_SERIALIZE_ENUM(vpMbGenericTracker::vpTrackerType, {
@@ -870,6 +876,10 @@ NLOHMANN_JSON_SERIALIZE_ENUM(vpMbGenericTracker::vpTrackerType, {
 });
 #endif
 
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
 /**
 * @brief Serialize a tracker wrapper's settings into a JSON representation.
 * \sa from_json for more details on what is serialized
@@ -879,7 +889,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(vpMbGenericTracker::vpTrackerType, {
 inline void to_json(nlohmann::json &j, const vpMbGenericTracker::TrackerWrapper &t)
 {
   // Common tracker attributes
-  const static std::vector<vpMbGenericTracker::vpTrackerType> trackerTypes = {
+  VP_ATTRIBUTE_NO_DESTROY const static std::vector<vpMbGenericTracker::vpTrackerType> trackerTypes = {
     vpMbGenericTracker::EDGE_TRACKER,
     #if defined(VISP_HAVE_MODULE_KLT) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && defined(HAVE_OPENCV_VIDEO)
     vpMbGenericTracker::KLT_TRACKER,
@@ -1054,7 +1064,7 @@ inline void from_json(const nlohmann::json &j, vpMbGenericTracker::TrackerWrappe
       t.setDepthDenseSamplingStep(sampling.at("x"), sampling.at("y"));
     }
   }
-}
+  }
 
 #endif
 

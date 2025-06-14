@@ -78,7 +78,7 @@ bool getOptions(int argc, const char **argv, std::string &ipath, vpDisplayType &
 
   \param name : Program name.
   \param badparam : Bad parameter name.
-  \param ipath: Input image path.
+  \param ipath : Input image path.
   \param dtype : Type of video device.
 
  */
@@ -155,7 +155,7 @@ OPTIONS:                                               Default\n\
 
   \param argc : Command line number of parameters.
   \param argv : Array of command line parameters.
-  \param ipath: Input image path.
+  \param ipath : Input image path.
   \param dtype : Type of video device.
   \param list : Set as true,list the available video-devices.
   \param click_allowed : Enable/disable mouse click.
@@ -205,7 +205,6 @@ bool getOptions(int argc, const char **argv, std::string &ipath, vpDisplayType &
     case 'h':
       usage(argv[0], nullptr, ipath, dtype);
       return false;
-      break;
     case 'c':
       click_allowed = false;
       break;
@@ -216,7 +215,6 @@ bool getOptions(int argc, const char **argv, std::string &ipath, vpDisplayType &
     default:
       usage(argv[0], optarg_, ipath, dtype);
       return false;
-      break;
     }
   }
 
@@ -440,7 +438,7 @@ int main(int argc, const char **argv)
           break;
         }
         vpDisplay::getPointerPosition(I, ip);
-        std::cout << "  Pointer poisition : " << ip << std::endl;
+        std::cout << "  Pointer position: " << ip << std::endl;
         std::cout << "A click to exit...\n";
         vpDisplay::getClick(I);
       }

@@ -1,3 +1,4 @@
+
 //! \example tutorial-face-detector-live-threaded.cpp
 #include <iostream>
 
@@ -10,9 +11,12 @@
 // #undef HAVE_OPENCV_VIDEOIO
 //! [Undef grabber]
 
-#if defined(VISP_HAVE_THREADS) && defined(HAVE_OPENCV_IMGPROC) \
-  && (((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_OBJDETECT)) || ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_XOBJDETECT))) \
-  && (defined(VISP_HAVE_V4L2) || (((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))))
+#if defined(VISP_HAVE_THREADS) && defined(VISP_HAVE_OPENCV) && defined(HAVE_OPENCV_IMGPROC) && \
+  (((VISP_HAVE_OPENCV_VERSION < 0x050000) && defined(HAVE_OPENCV_OBJDETECT)) || \
+   ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && defined(HAVE_OPENCV_XOBJDETECT))) && \
+  (defined(VISP_HAVE_V4L2) || \
+  (((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || \
+   ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))))
 
 #include <thread>
 #include <mutex>
@@ -37,8 +41,12 @@ using namespace VISP_NAMESPACE_NAME;
 typedef enum { capture_waiting, capture_started, capture_stopped } t_CaptureState;
 
 #if defined(VISP_HAVE_V4L2)
+void captureFunction(vpV4l2Grabber &cap, std::mutex &mutex_capture, vpImage<unsigned char> &frame, t_CaptureState &capture_state);
+
 void captureFunction(vpV4l2Grabber &cap, std::mutex &mutex_capture, vpImage<unsigned char> &frame, t_CaptureState &capture_state)
 #elif defined(HAVE_OPENCV_VIDEOIO)
+void captureFunction(cv::VideoCapture &cap, std::mutex &mutex_capture, cv::Mat &frame, t_CaptureState &capture_state);
+
 void captureFunction(cv::VideoCapture &cap, std::mutex &mutex_capture, cv::Mat &frame, t_CaptureState &capture_state)
 #endif
 {
@@ -74,8 +82,12 @@ void captureFunction(cv::VideoCapture &cap, std::mutex &mutex_capture, cv::Mat &
 }
 
 #if defined(VISP_HAVE_V4L2)
+void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, vpImage<unsigned char> &frame, t_CaptureState &capture_state, vpRect &face_bbox, bool &face_available);
+
 void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, vpImage<unsigned char> &frame, t_CaptureState &capture_state, vpRect &face_bbox, bool &face_available)
 #elif ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
+void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat &frame, t_CaptureState &capture_state, vpRect &face_bbox, bool &face_available);
+
 void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat &frame, t_CaptureState &capture_state, vpRect &face_bbox, bool &face_available)
 #endif
 {
@@ -164,8 +176,12 @@ void displayFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat 
 
 //! [face-detection-threaded detectionFunction]
 #if defined(VISP_HAVE_V4L2)
+void detectionFunction(std::mutex &mutex_capture, std::mutex &mutex_face, vpImage<unsigned char> &frame, t_CaptureState &capture_state, vpRect &face_bbox, std::string &face_cascade_name, bool &face_available);
+
 void detectionFunction(std::mutex &mutex_capture, std::mutex &mutex_face, vpImage<unsigned char> &frame, t_CaptureState &capture_state, vpRect &face_bbox, std::string &face_cascade_name, bool &face_available)
 #elif ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
+void detectionFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat &frame, t_CaptureState &capture_state, vpRect &face_bbox, std::string &face_cascade_name, bool &face_available);
+
 void detectionFunction(std::mutex &mutex_capture, std::mutex &mutex_face, cv::Mat &frame, t_CaptureState &capture_state, vpRect &face_bbox, std::string &face_cascade_name, bool &face_available)
 #endif
 {
@@ -220,10 +236,10 @@ int main(int argc, const char *argv[])
       opt_face_cascade_name = std::string(argv[++i]);
     }
     else if (std::string(argv[i]) == "--device" && i + 1 < argc) {
-      opt_device = (unsigned int)atoi(argv[++i]);
+      opt_device = static_cast<unsigned int>(atoi(argv[++i]));
     }
     else if (std::string(argv[i]) == "--scale" && i + 1 < argc) {
-      opt_scale = (unsigned int)atoi(argv[++i]);
+      opt_scale = static_cast<unsigned int>(atoi(argv[++i]));
     }
     else if ((std::string(argv[i]) == "--help") || (std::string(argv[i]) == "-h")) {
       std::cout << "Usage: " << argv[0]
@@ -249,8 +265,8 @@ int main(int argc, const char *argv[])
   cv::VideoCapture cap;
   cap.open(opt_device);
 #if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
-  int width = (int)cap.get(cv::CAP_PROP_FRAME_WIDTH);
-  int height = (int)cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+  int width = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
+  int height = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
   cap.set(cv::CAP_PROP_FRAME_WIDTH, width / opt_scale);
   cap.set(cv::CAP_PROP_FRAME_HEIGHT, height / opt_scale);
 #else
@@ -298,10 +314,10 @@ int main()
 #if !defined(HAVE_OPENCV_IMGPROC)
   std::cout << "This tutorial needs OpenCV imgproc module that is missing." << std::endl;
 #endif
-#if (VISP_HAVE_OPENCV_VERSION < 0x050000) && !defined(HAVE_OPENCV_OBJDETECT)
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x050000) && !defined(HAVE_OPENCV_OBJDETECT)
   std::cout << "This tutorial needs OpenCV objdetect module that is missing." << std::endl;
 #endif
-#if ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && !defined(HAVE_OPENCV_XOBJDETECT))
+#if defined(VISP_HAVE_OPENCV) && ((VISP_HAVE_OPENCV_VERSION >= 0x050000) && !defined(HAVE_OPENCV_XOBJDETECT))
   std::cout << "This tutorial needs OpenCV xobjdetect module that is missing." << std::endl;
 #endif
 

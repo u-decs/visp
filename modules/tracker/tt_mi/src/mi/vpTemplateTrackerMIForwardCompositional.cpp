@@ -56,7 +56,7 @@ void vpTemplateTrackerMIForwardCompositional::initCompo()
     Warp->getdWdp0(i, j, ptTemplate[point].dW);
 
     double Tij = ptTemplate[point].val;
-    int ct = (int)((Tij * (Nc - 1)) / 255.);
+    int ct = static_cast<int>((Tij * (Nc - 1)) / 255.);
     double et = (Tij * (Nc - 1)) / 255. - ct;
     ptTemplateSupp[point].et = et;
     ptTemplateSupp[point].ct = ct;
@@ -115,8 +115,8 @@ void vpTemplateTrackerMIForwardCompositional::initHessienDesired(const vpImage<u
 
       cr = ptTemplateSupp[point].ct;
       er = ptTemplateSupp[point].et;
-      ct = (int)((IW * (Nc - 1)) / 255.);
-      et = ((double)IW * (Nc - 1)) / 255. - ct;
+      ct = static_cast<int>((IW * (Nc - 1)) / 255.);
+      et = (static_cast<double>(IW) * (Nc - 1)) / 255. - ct;
 
       Warp->dWarpCompo(X1, X2, p, ptTemplate[point].dW, dW);
 
@@ -205,8 +205,8 @@ void vpTemplateTrackerMIForwardCompositional::trackNoPyr(const vpImage<unsigned 
         dx = dIx.getValue(i2, j2) * (Nc - 1) / 255.;
         dy = dIy.getValue(i2, j2) * (Nc - 1) / 255.;
 
-        ct = (int)((IW * (Nc - 1)) / 255.);
-        et = ((double)IW * (Nc - 1)) / 255. - ct;
+        ct = static_cast<int>((IW * (Nc - 1)) / 255.);
+        et = (static_cast<double>(IW) * (Nc - 1)) / 255. - ct;
         cr = ptTemplateSupp[point].ct;
         er = ptTemplateSupp[point].et;
 

@@ -362,7 +362,7 @@ void vpPlotGraph::displayUnit(vpImage<unsigned char> &
 #endif
 )
 {
-  unsigned int offsetx = vpMath::minimum<unsigned int>((unsigned int)unitx.size(), dWidth);
+  unsigned int offsetx = vpMath::minimum<unsigned int>(static_cast<unsigned int>(unitx.size()), dWidth);
 
 #if defined(VISP_HAVE_X11)
   vpDisplay::displayText(I, vpImagePoint(yorg - 2 * epsi, dTopLeft.get_j() + dWidth - offsetx * epsj), unitx.c_str(),
@@ -377,7 +377,7 @@ void vpPlotGraph::displayUnit(vpImage<unsigned char> &
 
 void vpPlotGraph::displayTitle(vpImage<unsigned char> &I)
 {
-  double size = (double)title.size();
+  double size = static_cast<double>(title.size());
   size = size / 2.0;
   vpDisplay::displayText(I, vpImagePoint(dTopLeft.get_i() - 3 * epsi, dTopLeft.get_j() + dWidth / 2.0 - 4 * size),
                          title, vpColor::black);
@@ -410,7 +410,7 @@ void vpPlotGraph::rescalex(unsigned int side, double extremity)
     break;
   }
 
-  xdelt = (xmax - xmin) / (double)nbDivisionx;
+  xdelt = (xmax - xmin) / static_cast<double>(nbDivisionx);
 }
 
 void vpPlotGraph::rescaley(unsigned int side, double extremity)
@@ -424,7 +424,7 @@ void vpPlotGraph::rescaley(unsigned int side, double extremity)
     break;
   }
 
-  ydelt = (ymax - ymin) / (double)nbDivisiony;
+  ydelt = (ymax - ymin) / static_cast<double>(nbDivisiony);
 }
 
 void vpPlotGraph::initScale(vpImage<unsigned char> &I, double x_min, double x_max, int nbDivx, double y_min,
@@ -1243,7 +1243,7 @@ void vpPlotGraph::rescalez(unsigned int side, double extremity)
     break;
   }
 
-  zdelt = (zmax - zmin) / (double)nbDivisionz;
+  zdelt = (zmax - zmin) / static_cast<double>(nbDivisionz);
 }
 
 /*!
@@ -1345,6 +1345,6 @@ END_VISP_NAMESPACE
 
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work around to avoid warning: libvisp_gui.a(vpPlotGraph.cpp.o) has no symbols
-void dummy_vpPlotGraph() { };
+void dummy_vpPlotGraph() { }
 #endif
 #endif

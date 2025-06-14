@@ -136,7 +136,7 @@ bool getOptions(int argc, const char **argv, bool &display, bool &click, bool &s
       display = false;
       break;
     case 'i':
-      icamera = (unsigned int)atoi(optarg_);
+      icamera = static_cast<unsigned int>(atoi(optarg_));
       break;
     case 'o':
       save = true;
@@ -145,12 +145,10 @@ bool getOptions(int argc, const char **argv, bool &display, bool &click, bool &s
     case 'h':
       usage(argv[0], nullptr, icamera, opath);
       return false;
-      break;
 
     default:
       usage(argv[0], optarg_, icamera, opath);
       return false;
-      break;
     }
   }
 

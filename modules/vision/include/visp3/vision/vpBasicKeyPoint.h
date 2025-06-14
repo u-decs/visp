@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,9 +36,10 @@
 
 /*!
  * \file vpBasicKeyPoint.h
- *  \brief Class that defines what is a keypoint.
-*/
+ * \brief Class that defines what is a keypoint.
+ */
 
+#include <visp3/core/vpConfig.h>
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpColor.h>
 #include <visp3/core/vpImage.h>
@@ -69,12 +70,7 @@ public:
   /*!
    * Destructor.
    */
-  virtual ~vpBasicKeyPoint()
-  {
-    m_matchedReferencePoints.resize(0);
-    m_currentImagePointsList.resize(0);
-    m_referenceImagePointsList.resize(0);
-  }
+  virtual ~vpBasicKeyPoint();
 
   /*!
    * Build reference.
@@ -111,14 +107,12 @@ public:
   /*!
    * Display keypoints.
    */
-  virtual void display(const vpImage<unsigned char> &Iref, const vpImage<unsigned char> &Icurrent,
-    unsigned int size = 3) = 0;
+  virtual void display(const vpImage<unsigned char> &Iref, const vpImage<unsigned char> &Icurrent, unsigned int size = 3) = 0;
 
   /*!
    * Display keypoints.
    */
-  virtual void display(const vpImage<unsigned char> &Icurrent, unsigned int size = 3,
-  const vpColor &color = vpColor::green) = 0;
+  virtual void display(const vpImage<unsigned char> &Icurrent, unsigned int size = 3, const vpColor &color = vpColor::green) = 0;
 
   /*!
    * Indicate wether the reference has been built or not.
@@ -213,14 +207,14 @@ public:
    *
    * \return the number of reference points.
    */
-  inline unsigned int getReferencePointNumber() const { return (unsigned int)m_referenceImagePointsList.size(); };
+  inline unsigned int getReferencePointNumber() const { return static_cast<unsigned int>(m_referenceImagePointsList.size()); }
 
   /*!
    * Get the number of matched points.
    *
    * \return the number of matched points.
    */
-  inline unsigned int getMatchedPointNumber() const { return (unsigned int)m_matchedReferencePoints.size(); };
+  inline unsigned int getMatchedPointNumber() const { return static_cast<unsigned int>(m_matchedReferencePoints.size()); }
 
   /*!
    * Return the vector of reference image point.

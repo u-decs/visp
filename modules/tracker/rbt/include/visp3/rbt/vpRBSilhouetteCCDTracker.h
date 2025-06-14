@@ -147,7 +147,12 @@ inline void from_json(const nlohmann::json &j, vpCCDParameters &ccdParameters)
   ccdParameters.start_h = ccdParameters.h;
   ccdParameters.delta_h = j.value("delta_h", ccdParameters.delta_h);
   ccdParameters.start_delta_h = ccdParameters.delta_h;
-  ccdParameters.min_h = j.value("min_h", ccdParameters.min_h);
+  if (j.contains("min_h")) {
+    ccdParameters.min_h = j.value("min_h", ccdParameters.min_h);
+  }
+  else {
+    ccdParameters.min_h = ccdParameters.h;
+  }
 
   ccdParameters.phi_dim = j.value("phi_dim", ccdParameters.phi_dim);
   if (j.contains("gamma")) {
@@ -182,6 +187,15 @@ public:
     imgPoints.resize(resolution, 2 * 3 * normalPointsNumber, false, false);
     weight.resize(resolution, 2 * normalPointsNumber, false, false);
   }
+  void zero()
+  {
+    nv = 0.0;
+    mean_vic = 0.0;
+    cov_vic = 0.0;
+    vic = 0.0;
+    imgPoints = 0.0;
+    weight = 0.0;
+  }
 };
 
 /**
@@ -195,11 +209,11 @@ public:
 
   enum vpDisplayType
   {
-    SIMPLE = 0,
-    WEIGHT = 1,
-    ERROR = 2,
-    WEIGHT_AND_ERROR = 3,
-    INVALID = 4
+    DT_SIMPLE = 0,
+    DT_WEIGHT = 1,
+    DT_ERROR = 2,
+    DT_WEIGHT_AND_ERROR = 3,
+    DT_INVALID = 4
   };
 
   vpRBSilhouetteCCDTracker();
@@ -253,8 +267,8 @@ public:
    *
    * This value is between 0 and 1.
    */
-  float getMinimumMaskConfidence() const { return m_minMaskConfidence; }
-  void setMinimumMaskConfidence(float confidence)
+  double getMinimumMaskConfidence() const { return m_minMaskConfidence; }
+  void setMinimumMaskConfidence(double confidence)
   {
 
     m_minMaskConfidence = confidence;
@@ -269,7 +283,7 @@ public:
 
   void setDisplayType(vpDisplayType type)
   {
-    if (type == INVALID) {
+    if (type == DT_INVALID) {
       throw vpException(vpException::badValue, "CCD tracker display type is invalid");
     }
     m_displayType = type;
@@ -299,12 +313,20 @@ public:
   void display(const vpCameraParameters &cam, const vpImage<unsigned char> &I, const vpImage<vpRGBa> &IRGB, const vpImage<unsigned char> &depth) const VP_OVERRIDE;
 
 #if defined(VISP_HAVE_NLOHMANN_JSON)
+
+#if defined(__clang__)
+// Mute warning : declaration requires an exit-time destructor [-Wexit-time-destructors]
+// message : expanded from macro 'NLOHMANN_JSON_SERIALIZE_ENUM'
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wexit-time-destructors"
+#endif
+
   NLOHMANN_JSON_SERIALIZE_ENUM(vpRBSilhouetteCCDTracker::vpDisplayType, {
-        {vpRBSilhouetteCCDTracker::vpDisplayType::INVALID, nullptr},
-        {vpRBSilhouetteCCDTracker::vpDisplayType::SIMPLE, "simple"},
-        {vpRBSilhouetteCCDTracker::vpDisplayType::WEIGHT, "weight"},
-        {vpRBSilhouetteCCDTracker::vpDisplayType::ERROR, "error"},
-        {vpRBSilhouetteCCDTracker::vpDisplayType::WEIGHT_AND_ERROR, "weightAndError"}
+        {vpRBSilhouetteCCDTracker::vpDisplayType::DT_INVALID, nullptr},
+        {vpRBSilhouetteCCDTracker::vpDisplayType::DT_SIMPLE, "simple"},
+        {vpRBSilhouetteCCDTracker::vpDisplayType::DT_WEIGHT, "weight"},
+        {vpRBSilhouetteCCDTracker::vpDisplayType::DT_ERROR, "error"},
+        {vpRBSilhouetteCCDTracker::vpDisplayType::DT_WEIGHT_AND_ERROR, "weightAndError"}
       });
   virtual void loadJsonConfiguration(const nlohmann::json &j) VP_OVERRIDE
   {
@@ -319,6 +341,10 @@ public:
     setDisplayType(j.value("displayType", m_displayType));
     m_ccdParameters = j.value("ccd", m_ccdParameters);
   }
+
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 #endif
 

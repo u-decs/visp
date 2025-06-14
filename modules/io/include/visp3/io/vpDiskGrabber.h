@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -129,6 +129,11 @@ public:
   vpDiskGrabber();
 
   /*!
+   * Copy constructor.
+   */
+  vpDiskGrabber(const vpDiskGrabber &grabber);
+
+  /*!
    * Constructor that takes a generic image sequence as input.
    */
   VP_EXPLICIT vpDiskGrabber(const std::string &genericName);
@@ -137,7 +142,12 @@ public:
    * Destructor.
    * In fact nothing to destroy...
    */
-  virtual ~vpDiskGrabber() { };
+  virtual ~vpDiskGrabber() VP_OVERRIDE { }
+
+  /*!
+   * Copy operator.
+   */
+  vpDiskGrabber &operator=(const vpDiskGrabber &grabber);
 
   /*!
    * Constructor.
@@ -150,7 +160,7 @@ public:
    * \param ext : Extension of the image file.
    */
   VP_EXPLICIT vpDiskGrabber(const std::string &dir, const std::string &basename, long number, int step, unsigned int noz,
-                         const std::string &ext);
+                            const std::string &ext);
 
   /*!
    * Acquire an image reading the next image from the disk.
@@ -158,7 +168,7 @@ public:
    *
    * \param I : The image read from a file.
    */
-  void acquire(vpImage<unsigned char> &I);
+  void acquire(vpImage<unsigned char> &I) VP_OVERRIDE;
 
   /*!
    * Acquire an image reading the next image from the disk.
@@ -166,7 +176,7 @@ public:
    *
    * \param I : The image read from a file.
    */
-  void acquire(vpImage<vpRGBa> &I);
+  void acquire(vpImage<vpRGBa> &I) VP_OVERRIDE;
 
   /*!
    * Acquire an image reading the next image from the disk.
@@ -208,7 +218,7 @@ public:
    *
    * Does nothing. Here for compatibility issue with the vpFrameGrabber class.
    */
-  void close() { };
+  void close() VP_OVERRIDE { }
 
   /*!
    * Return the current image number.
@@ -224,13 +234,13 @@ public:
    * Read the first image of the sequence.
    * The image number is not incremented.
    */
-  void open(vpImage<unsigned char> &I);
+  void open(vpImage<unsigned char> &I) VP_OVERRIDE;
 
   /*!
    * Read the first image of the sequence.
    * The image number is not incremented.
    */
-  void open(vpImage<vpRGBa> &I);
+  void open(vpImage<vpRGBa> &I) VP_OVERRIDE;
 
   /*!
    * Read the first image of the sequence.

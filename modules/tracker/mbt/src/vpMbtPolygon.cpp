@@ -91,8 +91,9 @@ vpMbtPolygon &vpMbtPolygon::operator=(const vpMbtPolygon &mbtp)
   \param modulo : Indicates if the test should also consider faces that are
   not oriented counter clockwise. If true, the orientation of the face is
   without importance.
-  \param cam : Camera parameters (intrinsics parameters)
-  \param width, height : Image size used to consider level of detail.
+  \param cam : Camera parameters (intrinsics parameters).
+  \param width : Image width used to consider level of detail.
+  \param height : Image height used to consider level of detail.
 
   \return Return true if the polygon is visible.
 */
@@ -169,9 +170,9 @@ bool vpMbtPolygon::isVisible(const vpHomogeneousMatrix &cMo, double alpha, const
     pt.set_Y(pt.get_Y() + p[i].get_Y());
     pt.set_Z(pt.get_Z() + p[i].get_Z());
   }
-  e4[0] = -pt.get_X() / (double)nbpt;
-  e4[1] = -pt.get_Y() / (double)nbpt;
-  e4[2] = -pt.get_Z() / (double)nbpt;
+  e4[0] = -pt.get_X() / static_cast<double>(nbpt);
+  e4[1] = -pt.get_Y() / static_cast<double>(nbpt);
+  e4[2] = -pt.get_Z() / static_cast<double>(nbpt);
   e4.normalize();
 
   double angle = acos(vpColVector::dotProd(e4, faceNormal));

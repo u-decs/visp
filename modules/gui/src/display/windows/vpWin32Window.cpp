@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,11 +47,11 @@ BEGIN_VISP_NAMESPACE
 
 // Should be already defined ...
 #ifndef GET_X_LPARAM
-#define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#define GET_X_LPARAM(lp) (static_cast<int>(static_cast<short>(LOWORD(lp))))
 #endif
 
 #ifndef GET_Y_LPARAM
-#define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+#define GET_Y_LPARAM(lp) (static_cast<int>(static_cast<short>(HIWORD(lp))))
 #endif
 
 // declares the window as thread local
@@ -209,6 +209,40 @@ vpWin32Window::vpWin32Window(vpWin32Renderer *rend) : initialized(false)
 }
 
 /*!
+ * Copy constructor.
+ */
+vpWin32Window::vpWin32Window(const vpWin32Window &window)
+{
+  *this = window;
+}
+
+/*!
+ * Copy operator.
+ */
+vpWin32Window &vpWin32Window::operator=(const vpWin32Window &window)
+{
+  hInst = window.hInst;
+  hWnd = window.hWnd;
+  initialized = window.initialized;
+  semaInit = window.semaInit;
+  semaClick = window.semaClick;
+  semaClickUp = window.semaClickUp;
+  semaKey = window.semaKey;
+  semaMove = window.semaMove;
+  clickX = window.clickX;
+  clickXUp = window.clickXUp;
+  clickY = window.clickY;
+  clickYUp = window.clickYUp;
+  coordX = window.coordX;
+  coordY = window.coordY;
+  clickButton = window.clickButton;
+  clickButtonUp = window.clickButtonUp;
+  registered = window.registered;
+  renderer = window.renderer;
+  return *this;
+}
+
+/*!
   Destructor.
 */
 vpWin32Window::~vpWin32Window()
@@ -313,5 +347,5 @@ END_VISP_NAMESPACE
 #endif
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work around to avoid warning: libvisp_gui.a(vpWin32Window.cpp.o) has no symbols
-void dummy_vpWin32Window() { };
+void dummy_vpWin32Window() { }
 #endif

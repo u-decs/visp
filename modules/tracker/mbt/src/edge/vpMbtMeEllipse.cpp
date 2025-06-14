@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,15 +46,6 @@
 #include <limits>    // numeric_limits
 
 BEGIN_VISP_NAMESPACE
-/*!
-  Basic constructor that calls the constructor of the class vpMeTracker.
-*/
-vpMbtMeEllipse::vpMbtMeEllipse() : vpMeEllipse() { }
-
-/*!
-  Copy constructor.
-*/
-vpMbtMeEllipse::vpMbtMeEllipse(const vpMbtMeEllipse &me_ellipse) : vpMeEllipse(me_ellipse) { }
 
 /*!
   Compute the projection error of the ellipse.
@@ -78,7 +69,7 @@ void vpMbtMeEllipse::computeProjectionError(const vpImage<unsigned char> &I, dou
   sumErrorRad = 0;
   nbFeatures = 0;
 
-  double offset = static_cast<double>(std::floor(SobelX.getRows() / 2.0f));
+  double offset = static_cast<double>(std::floor(static_cast<double>(SobelX.getRows()) / 2.0));
   int height = static_cast<int>(I.getHeight());
   int width = static_cast<int>(I.getWidth());
 
@@ -118,7 +109,7 @@ void vpMbtMeEllipse::computeProjectionError(const vpImage<unsigned char> &I, dou
           if (jImg > max_jImg)
             jImg = max_jImg;
 
-          gradientX += SobelX[i][j] * I((unsigned int)iImg, (unsigned int)jImg);
+          gradientX += SobelX[i][j] * I(static_cast<unsigned int>(jImg), static_cast<unsigned int>(jImg));
         }
       }
 
@@ -137,7 +128,7 @@ void vpMbtMeEllipse::computeProjectionError(const vpImage<unsigned char> &I, dou
           if (jImg > max_jImg)
             jImg = max_jImg;
 
-          gradientY += SobelY[i][j] * I((unsigned int)iImg, (unsigned int)jImg);
+          gradientY += SobelY[i][j] * I(static_cast<unsigned int>(jImg), static_cast<unsigned int>(jImg));
         }
       }
 
@@ -237,7 +228,7 @@ void vpMbtMeEllipse::initTracking(const vpImage<unsigned char> &I, const vpImage
 void vpMbtMeEllipse::track(const vpImage<unsigned char> &I)
 {
   try {
-    vpMeTracker::track(I);
+    vpMeEllipse::track(I);
     if (m_mask != nullptr) {
       // Expected density could be modified if some vpMeSite are no more tracked because they are outside the mask.
       m_expectedDensity = static_cast<unsigned int>(m_meList.size());
@@ -291,9 +282,9 @@ void vpMbtMeEllipse::reSample(const vpImage<unsigned char> &I)
   }
 
   unsigned int n = numberOfSignal();
-  if ((double)n < 0.9 * m_expectedDensity) {
+  if (static_cast<double>(n) < 0.9 * m_expectedDensity) {
     sample(I);
-    vpMeTracker::track(I);
+    vpMeEllipse::track(I);
   }
 }
 
@@ -346,6 +337,10 @@ void vpMbtMeEllipse::sample(const vpImage<unsigned char> &I, bool doNotTrack)
       pix.init(iP.get_i(), iP.get_j(), theta);
       pix.setDisplay(m_selectDisplay);
       pix.setState(vpMeSite::NO_SUPPRESSION);
+      const double marginRatio = m_me->getThresholdMarginRatio();
+      double convolution = pix.convolution(I, m_me);
+      double contrastThreshold = fabs(convolution) * marginRatio;
+      pix.setContrastThreshold(contrastThreshold, *m_me);
       m_meList.push_back(pix);
       m_angleList.push_back(ang);
     }

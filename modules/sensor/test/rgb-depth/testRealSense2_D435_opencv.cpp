@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 #include <visp3/core/vpConfig.h>
 
 #if defined(VISP_HAVE_REALSENSE2) && (VISP_CXX_STANDARD >= VISP_CXX_STANDARD_11) && \
-    (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI)) && (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+    (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI)) && defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x030000)
 
 #include <visp3/core/vpImage.h>
 #include <visp3/core/vpImageConvert.h>
@@ -64,7 +64,7 @@ void getPointcloud(const rs2::depth_frame &depth_frame, std::vector<float3> &poi
   auto vf = depth_frame.as<rs2::video_frame>();
   const int width = vf.get_width();
   const int height = vf.get_height();
-  pointcloud.resize((size_t)(width * height));
+  pointcloud.resize(static_cast<size_t>(width * height));
 
   rs2::pointcloud pc;
   rs2::points points = pc.calculate(depth_frame);
@@ -222,8 +222,10 @@ int main()
 #if !defined(VISP_HAVE_REALSENSE2)
   std::cout << "Install librealsense2 to make this test work." << std::endl;
 #endif
+#if defined(VISP_HAVE_OPENCV)
 #if !(VISP_HAVE_OPENCV_VERSION >= 0x030000)
   std::cout << "Install OpenCV version >= 3 to make this test work." << std::endl;
+#endif
 #endif
   return EXIT_SUCCESS;
 }

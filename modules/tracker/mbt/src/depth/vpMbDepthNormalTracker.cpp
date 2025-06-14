@@ -1,7 +1,6 @@
-/****************************************************************************
- *
+/*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,8 +29,7 @@
  *
  * Description:
  * Model-based tracker using depth normal features.
- *
-*****************************************************************************/
+ */
 
 #include <iostream>
 
@@ -53,7 +51,10 @@
 #endif
 
 BEGIN_VISP_NAMESPACE
-vpMbDepthNormalTracker::vpMbDepthNormalTracker()
+/*!
+ * Default constructor.
+ */
+  vpMbDepthNormalTracker::vpMbDepthNormalTracker()
   : m_depthNormalFeatureEstimationMethod(vpMbtFaceDepthNormal::ROBUST_FEATURE_ESTIMATION),
   m_depthNormalHiddenFacesDisplay(), m_depthNormalListOfActiveFaces(), m_depthNormalListOfDesiredFeatures(),
   m_depthNormalFaces(), m_depthNormalPclPlaneEstimationMethod(2), m_depthNormalPclPlaneEstimationRansacMaxIter(200),
@@ -158,7 +159,7 @@ void vpMbDepthNormalTracker::computeVVS()
   unsigned int iter = 0;
 
   computeVVSInit();
-  unsigned int nb_features = (unsigned int)(3 * m_depthNormalListOfDesiredFeatures.size());
+  unsigned int nb_features = static_cast<unsigned int>(3 * m_depthNormalListOfDesiredFeatures.size());
 
   vpColVector error_prev(nb_features);
   vpMatrix LTL;
@@ -248,7 +249,7 @@ void vpMbDepthNormalTracker::computeVVS()
 
 void vpMbDepthNormalTracker::computeVVSInit()
 {
-  unsigned int nb_features = (unsigned int)(3 * m_depthNormalListOfDesiredFeatures.size());
+  unsigned int nb_features = static_cast<unsigned int>(3 * m_depthNormalListOfDesiredFeatures.size());
 
   m_L_depthNormal.resize(nb_features, 6, false, false);
   m_error_depthNormal.resize(nb_features, false);
@@ -270,7 +271,7 @@ void vpMbDepthNormalTracker::computeVVSInteractionMatrixAndResidu()
 
     (*it)->computeInteractionMatrix(m_cMo, L_face, features_face);
 
-    vpColVector face_error = features_face - m_depthNormalListOfDesiredFeatures[(size_t)cpt];
+    vpColVector face_error = features_face - m_depthNormalListOfDesiredFeatures[static_cast<size_t>(cpt)];
 
     if (!(*it)->planeIsInvalid(m_cMo, angleDisappears)) {
       m_error_depthNormal.insert(cpt * 3, face_error);
@@ -604,7 +605,7 @@ void vpMbDepthNormalTracker::setUseDepthNormalTracking(const std::string &name, 
 
 void vpMbDepthNormalTracker::testTracking() { }
 
-#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_SEGMENTATION) && defined(VISP_HAVE_PCL_FILTERS) && defined(VISP_HAVE_PCL_COMMON)
 void vpMbDepthNormalTracker::segmentPointCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &point_cloud)
 {
   m_depthNormalListOfActiveFaces.clear();
@@ -877,7 +878,7 @@ void vpMbDepthNormalTracker::track(const vpImage<vpRGBa> &)
   throw vpException(vpException::fatalError, "Cannot track with a color image!");
 }
 
-#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_COMMON)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_SEGMENTATION) && defined(VISP_HAVE_PCL_FILTERS) && defined(VISP_HAVE_PCL_COMMON)
 void vpMbDepthNormalTracker::track(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &point_cloud)
 {
   segmentPointCloud(point_cloud);

@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -237,28 +237,8 @@ vpHomogeneousMatrix::vpHomogeneousMatrix(const std::initializer_list<double> &li
 
   if (!isAnHomogeneousMatrix()) {
     if (isAnHomogeneousMatrix(1e-3)) {
-      const unsigned int index_0 = 0;
-      const unsigned int index_1 = 1;
-      const unsigned int index_2 = 2;
-      const unsigned int index_4 = 4;
-      const unsigned int index_5 = 5;
-      const unsigned int index_6 = 6;
-      const unsigned int index_8 = 8;
-      const unsigned int index_9 = 9;
-      const unsigned int index_10 = 10;
       // re-orthogonalize rotation matrix since the input is close to a valid rotation matrix
-      vpRotationMatrix R(*this);
-      R.orthogonalize();
-
-      data[index_0] = R[index_0][index_0];
-      data[index_1] = R[index_0][index_1];
-      data[index_2] = R[index_0][index_2];
-      data[index_4] = R[index_1][index_0];
-      data[index_5] = R[index_1][index_1];
-      data[index_6] = R[index_1][index_2];
-      data[index_8] = R[index_2][index_0];
-      data[index_9] = R[index_2][index_1];
-      data[index_10] = R[index_2][index_2];
+      orthogonalizeRotation();
     }
     else {
       throw(vpException(
@@ -447,13 +427,37 @@ vpHomogeneousMatrix &vpHomogeneousMatrix::buildFrom(const std::vector<float> &v)
 {
   const std::size_t val_12 = 12;
   const std::size_t val_16 = 16;
-  const unsigned int val_12ui = 12;
+  const unsigned int val_12ui = 12, val_16ui = 16;
   if ((v.size() != val_12) && (v.size() != val_16)) {
     throw(vpException(vpException::dimensionError, "Cannot convert std::vector<float> to vpHomogeneousMatrix"));
   }
 
   for (unsigned int i = 0; i < val_12ui; ++i) {
     this->data[i] = static_cast<double>(v[i]);
+  }
+
+  if (v.size() == val_12) {
+    data[12] = 0.;
+    data[13] = 0.;
+    data[14] = 0.;
+    data[15] = 1.;
+  }
+  else {
+    for (unsigned int i = val_12ui; i < val_16ui; ++i) {
+      this->data[i] = static_cast<double>(v[i]);
+    }
+  }
+
+  if (!isAnHomogeneousMatrix()) {
+    if (isAnHomogeneousMatrix(1e-3)) {
+      // re-orthogonalize rotation matrix since the input is close to a valid rotation matrix
+      orthogonalizeRotation();
+    }
+    else {
+      throw(vpException(
+        vpException::fatalError,
+        "Homogeneous matrix initialization failed since its elements are not valid (rotation part or last row)"));
+    }
   }
   return *this;
 }
@@ -506,14 +510,41 @@ vpHomogeneousMatrix &vpHomogeneousMatrix::buildFrom(const std::vector<double> &v
 {
   const std::size_t val_12 = 12;
   const std::size_t val_16 = 16;
-  const unsigned int val_12ui = 12;
+  const unsigned int val_12ui = 12, val_16ui = 16;
+
+
   if ((v.size() != val_12) && (v.size() != val_16)) {
     throw(vpException(vpException::dimensionError, "Cannot convert std::vector<double> to vpHomogeneousMatrix"));
   }
 
   for (unsigned int i = 0; i < val_12ui; ++i) {
-    this->data[i] = v[i];
+    this->data[i] = static_cast<double>(v[i]);
   }
+
+  if (v.size() == val_12) {
+    data[12] = 0.;
+    data[13] = 0.;
+    data[14] = 0.;
+    data[15] = 1.;
+  }
+  else {
+    for (unsigned int i = val_12ui; i < val_16ui; ++i) {
+      this->data[i] = static_cast<double>(v[i]);
+    }
+  }
+
+  if (!isAnHomogeneousMatrix()) {
+    if (isAnHomogeneousMatrix(1e-3)) {
+      // re-orthogonalize rotation matrix since the input is close to a valid rotation matrix
+      orthogonalizeRotation();
+    }
+    else {
+      throw(vpException(
+        vpException::fatalError,
+        "Homogeneous matrix initialization fails since its elements are not valid (rotation part or last row)"));
+    }
+  }
+
   return *this;
 }
 
@@ -969,9 +1000,10 @@ void vpHomogeneousMatrix::insert(const vpTranslationVector &t)
 void vpHomogeneousMatrix::insert(const vpQuaternionVector &q) { insert(vpRotationMatrix(q)); }
 
 /*!
-  Invert the homogeneous matrix
+  Invert the homogeneous matrix.
 
-  \return \f$\left[\begin{array}{cc}
+  \return The inverse of the homogenous matrix.
+  \f[\left[\begin{array}{cc}
   {\bf R} & {\bf t} \\
   {\bf 0}_{1\times 3} & 1
   \end{array}
@@ -979,8 +1011,7 @@ void vpHomogeneousMatrix::insert(const vpQuaternionVector &q) { insert(vpRotatio
   {\bf R}^T & -{\bf R}^T {\bf t} \\
   {\bf 0}_{1\times 3} & 1
   \end{array}
-  \right]\f$
-
+  \right]\f]
 */
 vpHomogeneousMatrix vpHomogeneousMatrix::inverse() const
 {
@@ -1092,26 +1123,7 @@ void vpHomogeneousMatrix::orthogonalizeRotation()
 {
   vpRotationMatrix R(*this);
   R.orthogonalize();
-
-  const unsigned int index_0 = 0;
-  const unsigned int index_1 = 1;
-  const unsigned int index_2 = 2;
-  const unsigned int index_4 = 4;
-  const unsigned int index_5 = 5;
-  const unsigned int index_6 = 6;
-  const unsigned int index_8 = 8;
-  const unsigned int index_9 = 9;
-  const unsigned int index_10 = 10;
-
-  data[index_0] = R[index_0][index_0];
-  data[index_1] = R[index_0][index_1];
-  data[index_2] = R[index_0][index_2];
-  data[index_4] = R[index_1][index_0];
-  data[index_5] = R[index_1][index_1];
-  data[index_6] = R[index_1][index_2];
-  data[index_8] = R[index_2][index_0];
-  data[index_9] = R[index_2][index_1];
-  data[index_10] = R[index_2][index_2];
+  insert(R);
 }
 
 //! Print the matrix as a pose vector \f$({\bf t}^T \theta {\bf u}^T)\f$
@@ -1347,7 +1359,7 @@ void vpHomogeneousMatrix::setIdentity() { eye(); }
 #endif //#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
 
 #ifdef VISP_HAVE_NLOHMANN_JSON
-const std::string vpHomogeneousMatrix::jsonTypeName = "vpHomogeneousMatrix";
+VP_ATTRIBUTE_NO_DESTROY const std::string vpHomogeneousMatrix::jsonTypeName = "vpHomogeneousMatrix";
 #include <visp3/core/vpJsonParsing.h>
 void vpHomogeneousMatrix::convert_to_json(nlohmann::json &j) const
 {

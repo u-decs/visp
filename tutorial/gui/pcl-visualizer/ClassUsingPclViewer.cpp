@@ -1,7 +1,7 @@
 //! \example ClassUsingPclViewer.cpp
 #include "ClassUsingPclViewer.h"
 
-#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_IO)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_VISUALIZATION) && defined(VISP_HAVE_PCL_IO)
 // PCL
 #include <pcl/io/pcd_io.h>
 
@@ -84,8 +84,8 @@ std::pair<vpPclViewer::pclPointCloudPointXYZRGBPtr, vpPclViewer::pclPointCloudPo
   for (unsigned int j = 0; j < m_m; j++) {
     for (unsigned int i = 0; i < m_n; i++) {
       // Creating model, expressed in the object frame
-      double oX = m_minX + (double)i * m_dX;
-      double oY = m_minY + (double)j * m_dY;
+      double oX = m_minX + static_cast<double>(i) * m_dX;
+      double oY = m_minY + static_cast<double>(j) * m_dY;
       double oZ = zFunction(oX, oY, order);
 
       // Setting the point coordinates of the first point cloud in

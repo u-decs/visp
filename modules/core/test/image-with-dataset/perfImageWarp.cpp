@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ using namespace VISP_NAMESPACE_NAME;
 #endif
 namespace
 {
-static std::string ipath = vpIoTools::getViSPImagesDataPath();
+VP_ATTRIBUTE_NO_DESTROY static std::string ipath = vpIoTools::getViSPImagesDataPath();
 }
 
 TEST_CASE("Benchmark affine warp on grayscale image", "[benchmark]")
@@ -98,7 +98,7 @@ TEST_CASE("Benchmark affine warp on grayscale image", "[benchmark]")
     return I_affine;
   };
 
-#if (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_IMGPROC)
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_IMGPROC)
   cv::Mat img, img_affine;
   vpImageConvert::convert(I, img);
   vpImageConvert::convert(I, img_affine);
@@ -169,7 +169,7 @@ TEST_CASE("Benchmark affine warp on color image", "[benchmark]")
     return I_affine;
   };
 
-#if (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_IMGPROC)
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_IMGPROC)
   cv::Mat img, img_affine;
   vpImageConvert::convert(I, img);
   vpImageConvert::convert(I, img_affine);
@@ -240,7 +240,7 @@ TEST_CASE("Benchmark perspective warp on grayscale image", "[benchmark]")
     return I_perspective;
   };
 
-#if (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_IMGPROC)
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_IMGPROC)
   cv::Mat img, img_perspective;
   vpImageConvert::convert(I, img);
   vpImageConvert::convert(I, img_perspective);
@@ -311,7 +311,7 @@ TEST_CASE("Benchmark perspective warp on color image", "[benchmark]")
     return I_perspective;
   };
 
-#if (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_IMGPROC)
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_IMGPROC)
   cv::Mat img, img_perspective;
   vpImageConvert::convert(I, img);
   vpImageConvert::convert(I, img_perspective);

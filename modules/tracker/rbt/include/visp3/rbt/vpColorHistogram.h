@@ -39,6 +39,7 @@
 #include <visp3/core/vpRGBa.h>
 
 #include <vector>
+#include <numeric>
 
 BEGIN_VISP_NAMESPACE
 
@@ -51,7 +52,7 @@ class VISP_EXPORT vpColorHistogram
 {
 public:
 
-  class Builder
+  class VISP_EXPORT Builder
   {
   public:
     Builder(unsigned int N) : m_counts(N *N *N, 0), m_N(N), m_binSize(256 / N) { }

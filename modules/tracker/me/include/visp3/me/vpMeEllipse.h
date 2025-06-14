@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ BEGIN_VISP_NAMESPACE
  * \class vpMeEllipse
  * \ingroup module_me
  *
- * \brief Class that tracks an ellipse using moving edges.
+ * \brief Class that tracks an ellipse or a circle using moving edges.
  *
  * In this class, an ellipse is defined as the set of image points \f$ (u,v) \f$
  * (for more information about the image frame see the vpImagePoint
@@ -86,7 +86,7 @@ BEGIN_VISP_NAMESPACE
  * \image html vpMeEllipse.gif
  *
  * The example below available in tutorial-me-ellipse-tracker.cpp and described
- * in \ref tutorial-tracking-me, section \ref tracking_me_ellipse shows how to
+ * in \ref tutorial-tracking-me, section \ref tracking_me_ellipse and section \ref tracking_me_circle shows how to
  * use this class.
  *
  * \include tutorial-me-ellipse-tracker.cpp
@@ -109,6 +109,11 @@ public:
    * Destructor.
    */
   virtual ~vpMeEllipse() VP_OVERRIDE;
+
+  /*!
+   * Copy operator.
+   */
+  vpMeEllipse &operator=(const vpMeEllipse &me_ellipse);
 
   /*!
    * Display the ellipse or arc of ellipse
@@ -539,7 +544,10 @@ protected:
    * tangent to the curve and the u axis. This angle is used for tracking the
    * vpMeSite.
    *
-   * \param u,v : The point belonging to the ellipse where the angle is computed.
+   * \param[in] u : The coordinate along the x-axis (horizontal) of the point belonging to the ellipse where the angle is
+   * computed.
+   * \param[in] v : The coordinate along the y-axis (vertical) of the point belonging to the ellipse where the angle is
+   * computed.
    */
   double computeTheta(double u, double v) const;
 

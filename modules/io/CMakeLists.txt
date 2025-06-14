@@ -42,7 +42,7 @@ set(opt_libs_private "")
 # Image i/o: jpeg, png, OpenCV (already included by core)
 if(USE_JPEG)
   # libjpeg usage is private
-  include_directories(${JPEG_INCLUDE_DIR})
+  include_directories(SYSTEM ${JPEG_INCLUDE_DIR})
   list(APPEND opt_libs_private ${JPEG_LIBRARIES})
   # If Qt3 and libjpeg are used, we add here QT_CLEAN_NAMESPACE define to
   # handle a compilation error "conflicting declaration 'typedef long int INT32'
@@ -53,14 +53,14 @@ endif()
 
 if(USE_PNG)
   # libpng usage is private
-  include_directories(${PNG_INCLUDE_DIR})
+  include_directories(SYSTEM ${PNG_INCLUDE_DIR})
   list(APPEND opt_libs_private ${PNG_LIBRARIES})
   add_definitions(${PNG_DEFINITIONS})
 endif()
 
 if(WITH_STBIMAGE)
   # stb_image is private
-  include_directories(${STBIMAGE_INCLUDE_DIRS})
+  include_directories(SYSTEM ${STBIMAGE_INCLUDE_DIRS})
 endif()
 
 if(USE_NLOHMANN_JSON AND NOT VISP_HAVE_NLOHMANN_JSON_FROM_VTK)
@@ -70,12 +70,12 @@ endif()
 
 if(WITH_SIMDLIB)
   # Simd lib is private
-  include_directories(${SIMDLIB_INCLUDE_DIRS})
+  include_directories(SYSTEM ${SIMDLIB_INCLUDE_DIRS})
   list(APPEND opt_libs_private ${SIMDLIB_LIBRARIES})
 endif()
 
 # TinyEXR lib is private
-include_directories(${TINYEXR_INCLUDE_DIRS})
+include_directories(SYSTEM ${TINYEXR_INCLUDE_DIRS})
 
 # OpenCV
 if(USE_OPENCV)
@@ -102,7 +102,7 @@ if(USE_OPENCV)
     set(OpenCV_REQUIRED_LIB_COMPONENTS ${OpenCV_LIB_COMPONENTS})
     vp_list_filterout(OpenCV_REQUIRED_LIB_COMPONENTS "opencv_*")
     # We import only required OpenCV libraries
-    list(APPEND OpenCV_REQUIRED_LIB_COMPONENTS "opencv_videoio" "opencv_imgcodecs")
+    list(APPEND OpenCV_REQUIRED_LIB_COMPONENTS "opencv_videoio" "opencv_imgcodecs" "opencv_imgproc")
 
     foreach(component_ ${OpenCV_REQUIRED_LIB_COMPONENTS})
       string(TOUPPER "${component_}" component_UP)

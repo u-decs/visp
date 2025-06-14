@@ -43,7 +43,7 @@ BEGIN_VISP_NAMESPACE
 /*!
    Default constructor.
  */
-vpDetectorQRCode::vpDetectorQRCode() : m_scanner()
+  vpDetectorQRCode::vpDetectorQRCode() : m_scanner()
 {
   // configure the reader
   m_scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
@@ -70,7 +70,7 @@ bool vpDetectorQRCode::detect(const vpImage<unsigned char> &I)
   zbar::Image img(width, height, "Y800", I.bitmap, (unsigned long)(width * height));
 
   // scan the image for barcodes
-  m_nb_objects = (size_t)m_scanner.scan(img);
+  m_nb_objects = static_cast<size_t>(m_scanner.scan(img));
 
   // extract results
   for (zbar::Image::SymbolIterator symbol = img.symbol_begin(); symbol != img.symbol_end(); ++symbol) {
@@ -78,7 +78,7 @@ bool vpDetectorQRCode::detect(const vpImage<unsigned char> &I)
     detected = true;
 
     std::vector<vpImagePoint> polygon;
-    for (unsigned int i = 0; i < (unsigned int)symbol->get_location_size(); i++) {
+    for (unsigned int i = 0; i < static_cast<unsigned int>(symbol->get_location_size()); i++) {
       polygon.push_back(vpImagePoint(symbol->get_location_y(i), symbol->get_location_x(i)));
     }
     m_polygon.push_back(polygon);
@@ -93,5 +93,5 @@ END_VISP_NAMESPACE
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work around to avoid warning: libvisp_core.a(vpDetectorQRCode.cpp.o) has
 // no symbols
-void dummy_vpDetectorQRCode() { };
+void dummy_vpDetectorQRCode() { }
 #endif

@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@
 #ifdef ENABLE_VISP_NAMESPACE
 using namespace VISP_NAMESPACE_NAME;
 #endif
-static std::string ipath = vpIoTools::getViSPImagesDataPath();
+VP_ATTRIBUTE_NO_DESTROY static std::string ipath = vpIoTools::getViSPImagesDataPath();
 
 TEST_CASE("Benchmark binary image morphology", "[benchmark]")
 {
@@ -133,7 +133,7 @@ TEST_CASE("Benchmark binary image morphology", "[benchmark]")
   }
 }
 
-#if (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_IMGPROC)
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_IMGPROC)
 TEST_CASE("Benchmark gray image morphology", "[benchmark]")
 {
   std::string imagePath = vpIoTools::createFilePath(ipath, "Klimt/Klimt.pgm");

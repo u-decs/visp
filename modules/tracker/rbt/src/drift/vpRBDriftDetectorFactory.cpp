@@ -33,8 +33,12 @@
 
 BEGIN_VISP_NAMESPACE
 
+template class VISP_EXPORT vpDynamicFactory<vpRBDriftDetector>;
+
 vpRBDriftDetectorFactory::vpRBDriftDetectorFactory()
 {
+#ifdef VISP_HAVE_NLOHMANN_JSON
+
   setJsonKeyFinder([](const nlohmann::json &j) -> std::string {
     return j.at("type");
   });
@@ -44,6 +48,7 @@ vpRBDriftDetectorFactory::vpRBDriftDetectorFactory()
     p->loadJsonConfiguration(j);
     return p;
   });
+#endif
 }
 
 END_VISP_NAMESPACE

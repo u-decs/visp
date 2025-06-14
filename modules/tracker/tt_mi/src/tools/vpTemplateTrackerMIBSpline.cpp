@@ -1,7 +1,6 @@
-/****************************************************************************
- *
+/*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,12 +29,8 @@
  *
  * Description:
  * Template tracker.
- *
- * Authors:
- * Amaury Dame
- * Aurelien Yol
- *
-*****************************************************************************/
+ */
+
 #include <visp3/tt_mi/vpTemplateTrackerMIBSpline.h>
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -260,7 +255,7 @@ void vpTemplateTrackerMIBSpline::PutTotPVBspline3(double *Prt, int cr, double &e
     *ptd2Bti++ = d2Bspline3(it + et);
   }
 
-  double *pt = &Prt[((cr + sr) * Nc + (ct + st)) * 9 * (1 + (int)(NbParam + NbParam * NbParam))];
+  double *pt = &Prt[((cr + sr) * Nc + (ct + st)) * 9 * (1 + static_cast<int>(NbParam + NbParam * NbParam))];
   for (short int ir = -1; ir <= 1; ++ir) {
     double Br = Bspline3(-ir + er);
 
@@ -306,7 +301,7 @@ void vpTemplateTrackerMIBSpline::PutTotPVBspline3(double *Prt, double *dPrt, dou
     *ptd2Bti++ = d2Bspline3(it + et);
   }
 
-  int NbParam_ = (int)NbParam;
+  int NbParam_ = static_cast<int>(NbParam);
   for (short int ir = -1; ir <= 1; ++ir) {
     double Br = Bspline3(-ir + er);
     short int irInd = ir + 1;
@@ -360,7 +355,7 @@ void vpTemplateTrackerMIBSpline::PutTotPVBspline3(double *Prt, double &er, doubl
       btend += LSIZE - 1;
     }
     for (; bt < btend; *Prt++ += Br * *bt++) {
-    };
+    }
   }
 #undef LSIZE
 }
@@ -381,7 +376,7 @@ void vpTemplateTrackerMIBSpline::PutTotPVBspline4(double *Prt, int cr, double er
     *ptd2Bti++ = d2Bspline4(-it + et);
   }
 
-  int NbParam_ = (int)NbParam;
+  int NbParam_ = static_cast<int>(NbParam);
 
   double *pt = &Prt[(cr * Nc + ct) * 16 * (1 + NbParam_ + NbParam_ * NbParam_)];
   for (char ir = -1; ir <= 2; ir++) {
@@ -429,7 +424,7 @@ void vpTemplateTrackerMIBSpline::PutTotPVBspline4(double *Prt, double *dPrt, dou
     *ptd2Bti++ = d2Bspline4(-it + et);
   }
 
-  int NbParam_ = (int)NbParam;
+  int NbParam_ = static_cast<int>(NbParam);
 
   for (int ir = -1; ir <= 2; ir++) {
     double Br = vpTemplateTrackerBSpline::Bspline4(-ir + er);
@@ -487,7 +482,7 @@ void vpTemplateTrackerMIBSpline::PutTotPVBspline4(double *Prt, double &er, doubl
       btend += LSIZE - 1;
     }
     for (; bt < btend; *Prt++ += Br * *bt++) {
-    };
+    }
   }
 #undef LSIZE
 }
@@ -541,7 +536,7 @@ void vpTemplateTrackerMIBSpline::PutTotPVBspline3NoSecond(double *Prt, int &cr, 
     *ptdBti++ = dBspline3(-it + et);
   }
 
-  int NbParam_ = (int)NbParam;
+  int NbParam_ = static_cast<int>(NbParam);
 
   double *pt = &Prt[((cr + sr) * Nc + (ct + st)) * 9 * (1 + NbParam_ + NbParam_ * NbParam_)];
   for (char ir = -1; ir <= 1; ir++) {
@@ -623,7 +618,7 @@ void vpTemplateTrackerMIBSpline::PutTotPVBspline4NoSecond(double *Prt, int &cr, 
     dBti[it + 1] = dBspline4(-it + et);
   }
 
-  int NbParam_ = (int)NbParam;
+  int NbParam_ = static_cast<int>(NbParam);
 
   double *pt = &Prt[(cr * Nc + ct) * 16 * (1 + NbParam_ + NbParam_ * NbParam_)];
   for (int ir = -1; ir <= 2; ir++) {
@@ -707,7 +702,7 @@ void vpTemplateTrackerMIBSpline::PutTotPVBspline3PrtTout(double *PrtTout, int &c
   int NbParam_ = static_cast<int>(NbParam);
   int NbParam_val = NbParam_ + NbParam_ * NbParam_;
 
-  double *pt = &PrtTout[(unsigned int)(((cr + sr) * Nc + (ct + st)) * 9 * (1 + NbParam_val))];
+  double *pt = &PrtTout[static_cast<unsigned int>(((cr + sr) * Nc + (ct + st)) * 9 * (1 + NbParam_val))];
   for (int ir = -1; ir <= 1; ir++) {
     double Br = Bspline3(-ir + er);
     for (int it = 0; it <= 2; it++) {
@@ -727,7 +722,7 @@ void vpTemplateTrackerMIBSpline::PutTotPVBspline4PrtTout(double *PrtTout, int &c
 
   int NbParam_ = static_cast<int>(NbParam);
   int NbParam_val = NbParam_ + NbParam_ * NbParam_;
-  double *pt = &PrtTout[(unsigned int)((cr * Nc + ct) * 16 * (1 + NbParam_val))];
+  double *pt = &PrtTout[static_cast<unsigned int>((cr * Nc + ct) * 16 * (1 + NbParam_val))];
   for (int ir = -1; ir <= 2; ir++) {
     double Br = vpTemplateTrackerBSpline::Bspline4(-ir + er);
     for (int it = 0; it <= 3; it++) {

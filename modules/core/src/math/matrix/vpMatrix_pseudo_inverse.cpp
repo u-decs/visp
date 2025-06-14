@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,6 +51,10 @@
 BEGIN_VISP_NAMESPACE
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+void compute_pseudo_inverse(const vpMatrix &U, const vpColVector &sv, const vpMatrix &V, unsigned int nrows,
+                            unsigned int ncols, double svThreshold, vpMatrix &Ap, int &rank_out, int *rank_in,
+                            vpMatrix *imA, vpMatrix *imAt, vpMatrix *kerAt);
 
 void compute_pseudo_inverse(const vpMatrix &U, const vpColVector &sv, const vpMatrix &V, unsigned int nrows,
                             unsigned int ncols, double svThreshold, vpMatrix &Ap, int &rank_out, int *rank_in,
@@ -427,7 +431,7 @@ vpMatrix vpMatrix::pseudoInverse(int rank_in) const
 
   \param Ap : The Moore-Penros pseudo inverse \f$ A^+ \f$.
 
-  \param sv: Vector corresponding to matrix \f$A\f$ singular values. The size
+  \param sv : Vector corresponding to matrix \f$A\f$ singular values. The size
   of this vector is equal to min(m, n).
 
   \param svThreshold : Threshold used to test the singular values. If
@@ -509,7 +513,7 @@ unsigned int vpMatrix::pseudoInverse(vpMatrix &Ap, vpColVector &sv, double svThr
 
   \param Ap : The Moore-Penros pseudo inverse \f$ A^+ \f$.
 
-  \param sv: Vector corresponding to matrix \f$A\f$ singular values. The size
+  \param sv : Vector corresponding to matrix \f$A\f$ singular values. The size
   of this vector is equal to min(m, n).
 
   \param[in] rank_in : Known rank of the matrix.
@@ -595,16 +599,16 @@ int vpMatrix::pseudoInverse(vpMatrix &Ap, vpColVector &sv, int rank_in) const
 
   \param Ap : The Moore-Penros pseudo inverse \f$ A^+ \f$.
 
-  \param sv: Vector corresponding to matrix \f$A\f$ singular values. The size
+  \param sv : Vector corresponding to matrix \f$A\f$ singular values. The size
   of this vector is equal to min(m, n).
 
   \param svThreshold : Threshold used to test the singular values. If
   a singular value is lower than this threshold we consider that the
   matrix is not full rank.
 
-  \param imA: \f$\mbox{Im}({\bf A})\f$ that is a m-by-r matrix.
+  \param imA : \f$\mbox{Im}({\bf A})\f$ that is a m-by-r matrix.
 
-  \param imAt: \f$\mbox{Im}({\bf A}^T)\f$ that is n-by-r matrix.
+  \param imAt : \f$\mbox{Im}({\bf A}^T)\f$ that is n-by-r matrix.
 
   \return The rank of the matrix \f$\bf A\f$.
 
@@ -679,14 +683,14 @@ unsigned int vpMatrix::pseudoInverse(vpMatrix &Ap, vpColVector &sv, double svThr
 
   \param Ap : The Moore-Penros pseudo inverse \f$ A^+ \f$.
 
-  \param sv: Vector corresponding to matrix \f$A\f$ singular values. The size
+  \param sv : Vector corresponding to matrix \f$A\f$ singular values. The size
   of this vector is equal to min(m, n).
 
   \param[in] rank_in : Known rank of the matrix.
 
-  \param imA: \f$\mbox{Im}({\bf A})\f$ that is a m-by-r matrix.
+  \param imA : \f$\mbox{Im}({\bf A})\f$ that is a m-by-r matrix.
 
-  \param imAt: \f$\mbox{Im}({\bf A}^T)\f$ that is n-by-r matrix.
+  \param imAt : \f$\mbox{Im}({\bf A}^T)\f$ that is n-by-r matrix.
 
   \return The rank of the matrix \f$\bf A\f$.
 

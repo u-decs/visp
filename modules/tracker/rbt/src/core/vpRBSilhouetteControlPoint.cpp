@@ -34,7 +34,7 @@
 #include <visp3/core/vpRobust.h>
 
 #define VISP_DEBUG_RB_CONTROL_POINT 1
-#define DEGENERATE_LINE_THRESHOLD 1e-5
+#define DEGENERATE_LINE_THRESHOLD 1e-7
 
 BEGIN_VISP_NAMESPACE
 
@@ -235,8 +235,8 @@ vpRBSilhouetteControlPoint::buildPoint(int n, int m, const double &Z, double ori
   thetaInit = theta;
   double px = m_cam->get_px();
   double py = m_cam->get_py();
-  int jc = m_cam->get_u0();
-  int ic = m_cam->get_v0();
+  int jc = static_cast<int>(m_cam->get_u0());
+  int ic = static_cast<int>(m_cam->get_v0());
   icpoint.set_i(n);
   icpoint.set_j(m);
   double x, y;
@@ -247,7 +247,7 @@ vpRBSilhouetteControlPoint::buildPoint(int n, int m, const double &Z, double ori
   cpoint.changeFrame(oMc);
   cpointo.setWorldCoordinates(cpoint.get_X(), cpoint.get_Y(), cpoint.get_Z());
   m_normalO = normo;
-  m_normal = R*normo;
+  m_normal = R * normo;
   nxs = cos(theta);
   nys = sin(theta);
   buildPLine(oMc);
@@ -267,8 +267,8 @@ vpRBSilhouetteControlPoint::buildSilhouettePoint(int n, int m, const double &Z, 
   thetaInit = theta;
   double px = m_cam->get_px();
   double py = m_cam->get_py();
-  int jc = m_cam->get_u0();
-  int ic = m_cam->get_v0();
+  int jc = static_cast<int>(m_cam->get_u0());
+  int ic = static_cast<int>(m_cam->get_v0());
   icpoint.set_i(n);
   icpoint.set_j(m);
   xs = (m-jc)/px;
@@ -331,7 +331,7 @@ vpRBSilhouetteControlPoint::updateSilhouettePoint(const vpHomogeneousMatrix &cMo
       m_line.changeFrame(cMo);
       m_line.projection();
     }
-    catch (vpException &e) {
+    catch (vpException &) {
       m_valid = false;
     }
     m_valid = !isLineDegenerate() && !std::isnan(m_line.getTheta());
@@ -357,11 +357,11 @@ vpRBSilhouetteControlPoint::updateSilhouettePoint(const vpHomogeneousMatrix &cMo
 
 void vpRBSilhouetteControlPoint::initControlPoint(const vpImage<unsigned char> &I, double cvlt)
 {
-  m_site.init((double)icpoint.get_i(), (double)icpoint.get_j(), theta, cvlt, m_meMaskSign);
+  m_site.init(static_cast<double>(icpoint.get_i()), static_cast<double>(icpoint.get_j()), theta, cvlt, m_meMaskSign);
   if (m_me != nullptr) {
     const double marginRatio = m_me->getThresholdMarginRatio();
     const double convolution = m_site.convolution(I, m_me);
-    m_site.init((double)icpoint.get_i(), (double)icpoint.get_j(), theta, convolution, m_meMaskSign);
+    m_site.init(static_cast<double>(icpoint.get_i()), static_cast<double>(icpoint.get_j()), theta, convolution, m_meMaskSign);
     const double contrastThreshold = fabs(convolution) * marginRatio;
     m_site.setContrastThreshold(contrastThreshold, *m_me);
   }
@@ -402,7 +402,7 @@ vpRBSilhouetteControlPoint::computeMeInteractionMatrixError(const vpHomogeneousM
 
     vpMatrix H;
     H = m_lineFeature.interaction();
-    double x = (double)m_site.m_j, y = (double)m_site.m_i;
+    double x = static_cast<double>(m_site.m_j), y = static_cast<double>(m_site.m_i);
 
     x = (x-xc)*mx;
     y = (y-yc)*my;

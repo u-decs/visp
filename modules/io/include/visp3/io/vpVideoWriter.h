@@ -43,7 +43,9 @@
 
 #include <visp3/io/vpImageIo.h>
 
-#if ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
+#if defined(VISP_HAVE_OPENCV) && \
+   (((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || \
+    ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO)))
 
 #if (VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)
 #include <opencv2/highgui/highgui.hpp> // for cv::VideoCapture
@@ -168,7 +170,9 @@ BEGIN_VISP_NAMESPACE
 class VISP_EXPORT vpVideoWriter
 {
 private:
-#if ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
+#if defined(VISP_HAVE_OPENCV) && \
+    (((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || \
+     ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO)))
   cv::VideoWriter m_writer;
   int m_fourcc;
   double m_framerate;
@@ -223,7 +227,7 @@ public:
 
     \return Returns the current frame index.
   */
-  inline unsigned int getCurrentFrameIndex() const { return m_frameCount; }
+  inline unsigned int getCurrentFrameIndex() const { return static_cast<unsigned int>(m_frameCount); }
   /*!
    * Return the name of the file in which the last frame was saved.
    */
@@ -241,7 +245,9 @@ public:
   void saveFrame(vpImage<vpRGBa> &I);
   void saveFrame(vpImage<unsigned char> &I);
 
-#if ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
+#if defined(VISP_HAVE_OPENCV) && \
+    (((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || \
+     ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO)))
   inline void setCodec(const int fourcc_codec) { m_fourcc = fourcc_codec; }
 #endif
 
@@ -257,7 +263,9 @@ public:
    *
    * \note Framerate can only be set when OpenCV > 2.1.0.
    */
-#if ((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO))
+#if defined(VISP_HAVE_OPENCV) && \
+    (((VISP_HAVE_OPENCV_VERSION < 0x030000) && defined(HAVE_OPENCV_HIGHGUI)) || \
+     ((VISP_HAVE_OPENCV_VERSION >= 0x030000) && defined(HAVE_OPENCV_VIDEOIO)))
   inline void setFramerate(const double framerate) { m_framerate = framerate; }
 #else
   inline void setFramerate(const double dummy) { (void)dummy; }

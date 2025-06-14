@@ -1,7 +1,6 @@
-/****************************************************************************
- *
+/*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,13 +28,12 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * Description:
  * Real-time 3D point clouds plotter based on the PCL library.
- *
-*****************************************************************************/
+ */
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #include <visp3/core/vpConfig.h>
-#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_IO) && defined(VISP_HAVE_THREADS)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_VISUALIZATION) && defined(VISP_HAVE_PCL_IO) && defined(VISP_HAVE_THREADS)
 // ViSP
 #include <visp3/gui/vpPclViewer.h>
 #include <visp3/gui/vpColorBlindFriendlyPalette.h>
@@ -245,9 +243,9 @@ unsigned int vpPclViewer::addSurface(const pclPointCloudPointXYZRGB::Ptr &surfac
   }
 
   std::vector<double> v_RGBdouble = {
-    (double)v_RGB[0],
-    (double)v_RGB[1],
-    (double)v_RGB[2]
+    static_cast<double>(v_RGB[0]),
+    static_cast<double>(v_RGB[1]),
+    static_cast<double>(v_RGB[2])
   };
   s_vhandler.push_back(v_RGBdouble);
 
@@ -334,8 +332,6 @@ unsigned int vpPclViewer::addSurface(const pclPointCloudPointXYZRGB::Ptr &surfac
 
   return id;
 }
-
-
 
 void vpPclViewer::display()
 {
@@ -489,6 +485,6 @@ void vpPclViewer::threadUpdateSurfaceOriginalColor(const pclPointCloudPointXYZRG
 END_VISP_NAMESPACE
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work around to avoid warning: libvisp_core.a(vpD3DRenderer.cpp.o) has no symbols
-void dummy_vpPCLPointCLoudVisualization() { };
+void dummy_vpPCLPointCLoudVisualization() { }
 #endif
 #endif

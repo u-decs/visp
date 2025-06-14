@@ -10,7 +10,7 @@
 #include <visp3/mbt/vpMbGenericTracker.h>
 //! [Include]
 
-#if defined(VISP_HAVE_PCL)  && defined(VISP_HAVE_PCL_COMMON)
+#if defined(VISP_HAVE_PCL) && defined(VISP_HAVE_PCL_SEGMENTATION) && defined(VISP_HAVE_PCL_FILTERS) && defined(VISP_HAVE_PCL_COMMON)
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -67,7 +67,7 @@ bool read_data(unsigned int cpt, const std::string &input_directory, vpImage<vpR
   vpImageIo::read(I_color, filename_color);
 
   // Read raw depth
-  std::string filename_depth = vpIoTools::formatString(input_directory + "/depth_image_%04d.jpg", cpt);
+  std::string filename_depth = vpIoTools::formatString(input_directory + "/depth_image_%04d.bin", cpt);
 
   std::ifstream file_depth(filename_depth.c_str(), std::ios::in | std::ios::binary);
   if (!file_depth.is_open()) {
@@ -90,7 +90,7 @@ bool read_data(unsigned int cpt, const std::string &input_directory, vpImage<vpR
   // Transform pointcloud
   pointcloud->width = width;
   pointcloud->height = height;
-  pointcloud->resize((size_t)width * height);
+  pointcloud->resize(static_cast<size_t>(width * height));
 
   // Only for Creative SR300
   const float depth_scale = 0.00100000005f;
@@ -109,11 +109,11 @@ bool read_data(unsigned int cpt, const std::string &input_directory, vpImage<vpR
     for (unsigned int j = 0; j < width; j++) {
       float scaled_depth = I_depth_raw[i][j] * depth_scale;
       float point[3];
-      float pixel[2] = { (float)j, (float)i };
+      float pixel[2] = { static_cast<float>(j), static_cast<float>(i) };
       rs_deproject_pixel_to_point(point, depth_intrinsic, pixel, scaled_depth);
-      pointcloud->points[(size_t)(i * width + j)].x = point[0];
-      pointcloud->points[(size_t)(i * width + j)].y = point[1];
-      pointcloud->points[(size_t)(i * width + j)].z = point[2];
+      pointcloud->points[static_cast<size_t>(i * width + j)].x = point[0];
+      pointcloud->points[static_cast<size_t>(i * width + j)].y = point[1];
+      pointcloud->points[static_cast<size_t>(i * width + j)].z = point[2];
     }
   }
 

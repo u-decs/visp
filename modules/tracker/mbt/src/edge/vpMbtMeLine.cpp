@@ -1,6 +1,6 @@
 /*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2024 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,11 +62,18 @@ vpMbtMeLine::vpMbtMeLine()
 vpMbtMeLine::vpMbtMeLine(const vpMbtMeLine &meline)
   : vpMeLine(meline)
 {
+  *this = meline;
+}
+
+vpMbtMeLine &vpMbtMeLine::operator=(const vpMbtMeLine &meline)
+{
   imin = meline.imin;
   jmin = meline.jmin;
   imax = meline.imax;
   jmax = meline.jmax;
   expecteddensity = meline.expecteddensity;
+
+  return *this;
 }
 
 /*!
@@ -114,10 +121,10 @@ void vpMbtMeLine::initTracking(const vpImage<unsigned char> &I, const vpImagePoi
   // 2. We call what is not specific
   vpMeTracker::initTracking(I);
 
-  expecteddensity = (double)m_meList.size();
+  expecteddensity = static_cast<double>(m_meList.size());
 
   if (!doNoTrack) {
-    vpMeTracker::track(I);
+    vpMeLine::track(I);
   }
 }
 
@@ -145,14 +152,14 @@ unsigned int vpMbtMeLine::seekExtremities(const vpImage<unsigned char> &I)
   double diffsj = jd2 - jd1;
   double s = sqrt(vpMath::sqr(diffsi) + vpMath::sqr(diffsj));
 
-  double sample_step = (double)m_me->getSampleStep();
+  double sample_step = static_cast<double>(m_me->getSampleStep());
 
   double di = diffsi * sample_step / s; // pas de risque de /0 car d(P1,P2) >0
   double dj = diffsj * sample_step / s;
 
   vpMeSite P;
 
-  P.init((int)id1, (int)jd1, m_delta, 0, m_sign);
+  P.init(static_cast<int>(id1), static_cast<int>(jd1), m_delta, 0, m_sign);
   P.setDisplay(m_selectDisplay);
   const double marginRatio = m_me->getThresholdMarginRatio();
 
@@ -285,7 +292,7 @@ void vpMbtMeLine::suppressPoints(const vpImage<unsigned char> &I)
         s.setState(vpMeSite::CONTRAST);
       }
     }
-    if (outOfImage(s.m_i, s.m_j, (int)(m_me->getRange() + m_me->getMaskSize() + 1), (int)I.getHeight(), (int)I.getWidth())) {
+    if (outOfImage(s.m_i, s.m_j, static_cast<int>(m_me->getRange() + m_me->getMaskSize() + 1), static_cast<int>(I.getHeight()), static_cast<int>(I.getWidth()))) {
       s.setState(vpMeSite::TOO_NEAR);
     }
 
@@ -333,7 +340,7 @@ void vpMbtMeLine::computeProjectionError(const vpImage<unsigned char> &I, double
   vecLine[1] = sin(deltaNormalized);
   vecLine.normalize();
 
-  double offset = std::floor(SobelX.getRows() / 2.0f);
+  double offset = std::floor(SobelX.getRows() / 2.0);
 
   for (std::list<vpMeSite>::const_iterator it = m_meList.begin(); it != m_meList.end(); ++it) {
     if (iter != 0 && iter + 1 != m_meList.size()) {
@@ -362,7 +369,7 @@ void vpMbtMeLine::computeProjectionError(const vpImage<unsigned char> &I, double
             jImg = I.getWidth() - 1;
           }
 
-          gradientX += SobelX[i][j] * I((unsigned int)iImg, (unsigned int)jImg);
+          gradientX += SobelX[i][j] * I(static_cast<unsigned int>(iImg), static_cast<unsigned int>(jImg));
         }
       }
 
@@ -381,7 +388,7 @@ void vpMbtMeLine::computeProjectionError(const vpImage<unsigned char> &I, double
           if (jImg > I.getWidth() - 1)
             jImg = I.getWidth() - 1;
 
-          gradientY += SobelY[i][j] * I((unsigned int)iImg, (unsigned int)jImg);
+          gradientY += SobelY[i][j] * I(static_cast<unsigned int>(iImg), static_cast<unsigned int>(jImg));
         }
       }
 
@@ -402,17 +409,17 @@ void vpMbtMeLine::computeProjectionError(const vpImage<unsigned char> &I, double
       double angle2 = acos(vecLine * (-vecGrad));
 
       if (display) {
-        vpDisplay::displayArrow(I, it->get_i(), it->get_j(), (int)(it->get_i() + length * cos(deltaNormalized)),
-                                (int)(it->get_j() + length * sin(deltaNormalized)), vpColor::blue,
+        vpDisplay::displayArrow(I, it->get_i(), it->get_j(), static_cast<int>(it->get_i() + length * cos(deltaNormalized)),
+                                static_cast<int>(it->get_j() + length * sin(deltaNormalized)), vpColor::blue,
                                 length >= 20 ? length / 5 : 4, length >= 20 ? length / 10 : 2, thickness);
         if (angle1 < angle2) {
-          vpDisplay::displayArrow(I, it->get_i(), it->get_j(), (int)(it->get_i() + length * cos(angle)),
-                                  (int)(it->get_j() + length * sin(angle)), vpColor::red, length >= 20 ? length / 5 : 4,
+          vpDisplay::displayArrow(I, it->get_i(), it->get_j(), static_cast<int>(it->get_i() + length * cos(angle)),
+                                  static_cast<int>(it->get_j() + length * sin(angle)), vpColor::red, length >= 20 ? length / 5 : 4,
                                   length >= 20 ? length / 10 : 2, thickness);
         }
         else {
-          vpDisplay::displayArrow(I, it->get_i(), it->get_j(), (int)(it->get_i() + length * cos(angle + M_PI)),
-                                  (int)(it->get_j() + length * sin(angle + M_PI)), vpColor::red,
+          vpDisplay::displayArrow(I, it->get_i(), it->get_j(), static_cast<int>(it->get_i() + length * cos(angle + M_PI)),
+                                  static_cast<int>(it->get_j() + length * sin(angle + M_PI)), vpColor::red,
                                   length >= 20 ? length / 5 : 4, length >= 20 ? length / 10 : 2, thickness);
         }
       }
@@ -439,10 +446,10 @@ void vpMbtMeLine::computeProjectionError(const vpImage<unsigned char> &I, double
 */
 void vpMbtMeLine::reSample(const vpImage<unsigned char> &I, const vpImagePoint &ip1, const vpImagePoint &ip2)
 {
-  m_PExt[0].m_ifloat = (float)ip1.get_i();
-  m_PExt[0].m_jfloat = (float)ip1.get_j();
-  m_PExt[1].m_ifloat = (float)ip2.get_i();
-  m_PExt[1].m_jfloat = (float)ip2.get_j();
+  m_PExt[0].m_ifloat = static_cast<double>(ip1.get_i());
+  m_PExt[0].m_jfloat = static_cast<double>(ip1.get_j());
+  m_PExt[1].m_ifloat = static_cast<double>(ip2.get_i());
+  m_PExt[1].m_jfloat = static_cast<double>(ip2.get_j());
 
   vpMeLine::reSample(I);
 }
@@ -456,7 +463,7 @@ void vpMbtMeLine::track(const vpImage<unsigned char> &I)
 {
   if (m_mask != nullptr) {
   // Expected density could be modified if some vpMeSite are no more tracked because they are outside the mask.
-    expecteddensity = (double)m_meList.size();
+    expecteddensity = static_cast<double>(m_meList.size());
   }
 
   vpMeLine::track(I);

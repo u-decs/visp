@@ -125,12 +125,10 @@ bool getOptions(int argc, const char **argv, bool &opt_display, bool &opt_click,
     case 'h':
       usage(argv[0], nullptr);
       return false;
-      break;
 
     default:
       usage(argv[0], optarg_);
       return false;
-      break;
     }
   }
 
@@ -242,8 +240,8 @@ int main(int argc, const char **argv)
         vpDisplay::getClick(I);
 
         vpRect bbox = p4.getBoundingBox();
-        for (unsigned int i = (unsigned int)floor(bbox.getTop()); i < (unsigned int)ceil(bbox.getBottom()); ++i) {
-          for (unsigned int j = (unsigned int)floor(bbox.getLeft()); j < (unsigned int)ceil(bbox.getRight()); ++j) {
+        for (unsigned int i = static_cast<unsigned int>(floor(bbox.getTop())); i < static_cast<unsigned int>(ceil(bbox.getBottom())); ++i) {
+          for (unsigned int j = static_cast<unsigned int>(floor(bbox.getLeft())); j < static_cast<unsigned int>(ceil(bbox.getRight())); ++j) {
             if (p4.isInside(vpImagePoint(i, j), (vpPolygon::PointInPolygonMethod)method)) {
               vpDisplay::displayPoint(I, vpImagePoint(i, j), vpColor::orange);
             }
@@ -307,7 +305,7 @@ int main(int argc, const char **argv)
 
 #if (defined VISP_HAVE_X11) || (defined VISP_HAVE_GTK) || (defined VISP_HAVE_GDI)
         display1.init(I_segmentIntersection, 10, 10, "Segment Intersection test");
-        display2.init(I_rayCasting, (int)I_segmentIntersection.getWidth() + 10, 10, "Ray Casting test");
+        display2.init(I_rayCasting, static_cast<int>(I_segmentIntersection.getWidth()) + 10, 10, "Ray Casting test");
 #endif
 
         vpDisplay::display(I_segmentIntersection);

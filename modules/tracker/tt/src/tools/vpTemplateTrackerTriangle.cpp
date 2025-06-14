@@ -42,7 +42,7 @@ BEGIN_VISP_NAMESPACE
 /*!
   Default constructor.
  */
-vpTemplateTrackerTriangle::vpTemplateTrackerTriangle()
+  vpTemplateTrackerTriangle::vpTemplateTrackerTriangle()
   : minx_temp(0), miny_temp(0), C1(), C2(), C3(), l_t(0), h_t(0), not_good(false), uvinv00(0.), uvinv01(0.),
   uvinv10(0.), uvinv11(0.), marge_triangle(0.00001), area(0)
 { }
@@ -187,7 +187,7 @@ void vpTemplateTrackerTriangle::init(const vpImagePoint &c1, const vpImagePoint 
   */
 void vpTemplateTrackerTriangle::init(int x1, int y1, int x2, int y2, int x3, int y3)
 {
-  init((double)x1, (double)y1, (double)x2, (double)y2, (double)x3, (double)y3);
+  init(static_cast<double>(x1), static_cast<double>(y1), static_cast<double>(x2), static_cast<double>(y2), static_cast<double>(x3), static_cast<double>(y3));
 }
 
 /*!
@@ -400,8 +400,8 @@ void vpTemplateTrackerTriangle::getSize(double &w, double &h) const
  */
 void vpTemplateTrackerTriangle::getSize(int &w, int &h) const
 {
-  w = (int)l_t + 1;
-  h = (int)h_t + 1;
+  w = static_cast<int>(l_t) + 1;
+  h = static_cast<int>(h_t) + 1;
 }
 
 /*!

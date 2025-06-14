@@ -1,7 +1,6 @@
-/****************************************************************************
- *
+/*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,8 +29,7 @@
  *
  * Description: Class which enables to project an image in the 3D space
  * and get the view of a virtual camera.
- *
-*****************************************************************************/
+ */
 
 #include <visp3/core/vpImageConvert.h>
 #include <visp3/core/vpMatrixException.h>
@@ -190,7 +188,7 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, const vpCameraParamet
     I = Ig;
   else {
     if (cleanPrevImage) {
-      unsigned char col = (unsigned char)(0.2126 * bgColor.R + 0.7152 * bgColor.G + 0.0722 * bgColor.B);
+      unsigned char col = static_cast<unsigned char>(0.2126 * bgColor.R + 0.7152 * bgColor.G + 0.0722 * bgColor.B);
       for (unsigned int i = 0; i < I.getHeight(); i++) {
         for (unsigned int j = 0; j < I.getWidth(); j++) {
           I[i][j] = col;
@@ -214,8 +212,8 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, const vpCameraParamet
     unsigned int width = I.getWidth();
     vpImagePoint ip;
 
-    for (unsigned int i = (unsigned int)top; i < (unsigned int)bottom; i++) {
-      for (unsigned int j = (unsigned int)left; j < (unsigned int)right; j++) {
+    for (unsigned int i = static_cast<unsigned int>(top); i < static_cast<unsigned int>(bottom); i++) {
+      for (unsigned int j = static_cast<unsigned int>(left); j < static_cast<unsigned int>(right); j++) {
         double x = 0, y = 0;
         ip.set_ij(i, j);
         vpPixelMeterConversion::convertPoint(cam, ip, x, y);
@@ -230,7 +228,7 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, const vpCameraParamet
           vpRGBa Ipixelplan;
           if (getPixel(ip, Ipixelplan)) {
             unsigned char pixelgrey =
-              (unsigned char)(0.2126 * Ipixelplan.R + 0.7152 * Ipixelplan.G + 0.0722 * Ipixelplan.B);
+              static_cast<unsigned char>(0.2126 * Ipixelplan.R + 0.7152 * Ipixelplan.G + 0.0722 * Ipixelplan.B);
             *(bitmap + i * width + j) = pixelgrey;
           }
         }
@@ -251,7 +249,7 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, const vpCameraParamet
 void vpImageSimulator::getImage(vpImage<unsigned char> &I, vpImage<unsigned char> &Isrc, const vpCameraParameters &cam)
 {
   if (cleanPrevImage) {
-    unsigned char col = (unsigned char)(0.2126 * bgColor.R + 0.7152 * bgColor.G + 0.0722 * bgColor.B);
+    unsigned char col = static_cast<unsigned char>(0.2126 * bgColor.R + 0.7152 * bgColor.G + 0.0722 * bgColor.B);
     for (unsigned int i = 0; i < I.getHeight(); i++) {
       for (unsigned int j = 0; j < I.getWidth(); j++) {
         I[i][j] = col;
@@ -273,8 +271,8 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, vpImage<unsigned char
     unsigned int width = I.getWidth();
     vpImagePoint ip;
 
-    for (unsigned int i = (unsigned int)top; i < (unsigned int)bottom; i++) {
-      for (unsigned int j = (unsigned int)left; j < (unsigned int)right; j++) {
+    for (unsigned int i = static_cast<unsigned int>(top); i < static_cast<unsigned int>(bottom); i++) {
+      for (unsigned int j = static_cast<unsigned int>(left); j < static_cast<unsigned int>(right); j++) {
         double x = 0, y = 0;
         ip.set_ij(i, j);
         vpPixelMeterConversion::convertPoint(cam, ip, x, y);
@@ -305,12 +303,12 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, vpImage<unsigned char
 */
 void vpImageSimulator::getImage(vpImage<unsigned char> &I, const vpCameraParameters &cam, vpMatrix &zBuffer)
 {
-  if (I.getWidth() != (unsigned int)zBuffer.getCols() || I.getHeight() != (unsigned int)zBuffer.getRows())
+  if (I.getWidth() != static_cast<unsigned int>(zBuffer.getCols()) || I.getHeight() != static_cast<unsigned int>(zBuffer.getRows()))
     throw(vpMatrixException(vpMatrixException::incorrectMatrixSizeError,
                             " zBuffer must have the same size as the image I ! "));
 
   if (cleanPrevImage) {
-    unsigned char col = (unsigned char)(0.2126 * bgColor.R + 0.7152 * bgColor.G + 0.0722 * bgColor.B);
+    unsigned char col = static_cast<unsigned char>(0.2126 * bgColor.R + 0.7152 * bgColor.G + 0.0722 * bgColor.B);
     for (unsigned int i = 0; i < I.getHeight(); i++) {
       for (unsigned int j = 0; j < I.getWidth(); j++) {
         I[i][j] = col;
@@ -332,8 +330,8 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, const vpCameraParamet
     unsigned int width = I.getWidth();
     vpImagePoint ip;
 
-    for (unsigned int i = (unsigned int)top; i < (unsigned int)bottom; i++) {
-      for (unsigned int j = (unsigned int)left; j < (unsigned int)right; j++) {
+    for (unsigned int i = static_cast<unsigned int>(top); i < static_cast<unsigned int>(bottom); i++) {
+      for (unsigned int j = static_cast<unsigned int>(left); j < static_cast<unsigned int>(right); j++) {
         double x = 0, y = 0;
         ip.set_ij(i, j);
         vpPixelMeterConversion::convertPoint(cam, ip, x, y);
@@ -352,7 +350,7 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, const vpCameraParamet
           if (getPixel(ip, Ipixelplan)) {
             if (Xinter_optim[2] < zBuffer[i][j] || zBuffer[i][j] < 0) {
               unsigned char pixelgrey =
-                (unsigned char)(0.2126 * Ipixelplan.R + 0.7152 * Ipixelplan.G + 0.0722 * Ipixelplan.B);
+                static_cast<unsigned char>(0.2126 * Ipixelplan.R + 0.7152 * Ipixelplan.G + 0.0722 * Ipixelplan.B);
               *(bitmap + i * width + j) = pixelgrey;
               zBuffer[i][j] = Xinter_optim[2];
             }
@@ -395,8 +393,8 @@ void vpImageSimulator::getImage(vpImage<vpRGBa> &I, const vpCameraParameters &ca
     unsigned int width = I.getWidth();
     vpImagePoint ip;
 
-    for (unsigned int i = (unsigned int)top; i < (unsigned int)bottom; i++) {
-      for (unsigned int j = (unsigned int)left; j < (unsigned int)right; j++) {
+    for (unsigned int i = static_cast<unsigned int>(top); i < static_cast<unsigned int>(bottom); i++) {
+      for (unsigned int j = static_cast<unsigned int>(left); j < static_cast<unsigned int>(right); j++) {
         double x = 0, y = 0;
         ip.set_ij(i, j);
         vpPixelMeterConversion::convertPoint(cam, ip, x, y);
@@ -456,8 +454,8 @@ void vpImageSimulator::getImage(vpImage<vpRGBa> &I, vpImage<vpRGBa> &Isrc, const
     unsigned int width = I.getWidth();
     vpImagePoint ip;
 
-    for (unsigned int i = (unsigned int)top; i < (unsigned int)bottom; i++) {
-      for (unsigned int j = (unsigned int)left; j < (unsigned int)right; j++) {
+    for (unsigned int i = static_cast<unsigned int>(top); i < static_cast<unsigned int>(bottom); i++) {
+      for (unsigned int j = static_cast<unsigned int>(left); j < static_cast<unsigned int>(right); j++) {
         double x = 0, y = 0;
         ip.set_ij(i, j);
         vpPixelMeterConversion::convertPoint(cam, ip, x, y);
@@ -488,7 +486,7 @@ void vpImageSimulator::getImage(vpImage<vpRGBa> &I, vpImage<vpRGBa> &Isrc, const
 */
 void vpImageSimulator::getImage(vpImage<vpRGBa> &I, const vpCameraParameters &cam, vpMatrix &zBuffer)
 {
-  if (I.getWidth() != (unsigned int)zBuffer.getCols() || I.getHeight() != (unsigned int)zBuffer.getRows())
+  if (I.getWidth() != static_cast<unsigned int>(zBuffer.getCols()) || I.getHeight() != static_cast<unsigned int>(zBuffer.getRows()))
     throw(vpMatrixException(vpMatrixException::incorrectMatrixSizeError,
                             " zBuffer must have the same size as the image I ! "));
 
@@ -514,8 +512,8 @@ void vpImageSimulator::getImage(vpImage<vpRGBa> &I, const vpCameraParameters &ca
     unsigned int width = I.getWidth();
     vpImagePoint ip;
 
-    for (unsigned int i = (unsigned int)top; i < (unsigned int)bottom; i++) {
-      for (unsigned int j = (unsigned int)left; j < (unsigned int)right; j++) {
+    for (unsigned int i = static_cast<unsigned int>(top); i < static_cast<unsigned int>(bottom); i++) {
+      for (unsigned int j = static_cast<unsigned int>(left); j < static_cast<unsigned int>(right); j++) {
         double x = 0, y = 0;
         ip.set_ij(i, j);
         vpPixelMeterConversion::convertPoint(cam, ip, x, y);
@@ -661,7 +659,7 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, std::list<vpImageSimu
   unsigned int width = I.getWidth();
   unsigned int height = I.getHeight();
 
-  unsigned int nbsimList = (unsigned int)list.size();
+  unsigned int nbsimList = static_cast<unsigned int>(list.size());
 
   if (nbsimList < 1)
     return;
@@ -669,7 +667,6 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, std::list<vpImageSimu
   vpImageSimulator **simList = new vpImageSimulator *[nbsimList];
 
   double topFinal = height + 1;
-  ;
   double bottomFinal = -1;
   double leftFinal = width + 1;
   double rightFinal = -1;
@@ -711,14 +708,14 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, std::list<vpImageSimu
   unsigned char *bitmap = I.bitmap;
   vpImagePoint ip;
 
-  for (unsigned int i = (unsigned int)topFinal; i < (unsigned int)bottomFinal; i++) {
-    for (unsigned int j = (unsigned int)leftFinal; j < (unsigned int)rightFinal; j++) {
+  for (unsigned int i = static_cast<unsigned int>(topFinal); i < static_cast<unsigned int>(bottomFinal); i++) {
+    for (unsigned int j = static_cast<unsigned int>(leftFinal); j < static_cast<unsigned int>(rightFinal); j++) {
       zmin = -1;
       double x = 0, y = 0;
       ip.set_ij(i, j);
       vpPixelMeterConversion::convertPoint(cam, ip, x, y);
       ip.set_ij(y, x);
-      for (int k = 0; k < (int)nbsimList; k++) {
+      for (int k = 0; k < static_cast<int>(nbsimList); k++) {
         double z = 0;
         if (simList[k]->getPixelDepth(ip, z)) {
           if (z < zmin || zmin < 0) {
@@ -737,7 +734,7 @@ void vpImageSimulator::getImage(vpImage<unsigned char> &I, std::list<vpImageSimu
           vpRGBa Ipixelplan(255, 255, 255);
           simList[indice]->getPixel(ip, Ipixelplan);
           unsigned char pixelgrey =
-            (unsigned char)(0.2126 * Ipixelplan.R + 0.7152 * Ipixelplan.G + 0.0722 * Ipixelplan.B);
+            static_cast<unsigned char>(0.2126 * Ipixelplan.R + 0.7152 * Ipixelplan.G + 0.0722 * Ipixelplan.B);
           *(bitmap + i * width + j) = pixelgrey;
         }
       }
@@ -862,7 +859,7 @@ void vpImageSimulator::getImage(vpImage<vpRGBa> &I, std::list<vpImageSimulator> 
   unsigned int width = I.getWidth();
   unsigned int height = I.getHeight();
 
-  unsigned int nbsimList = (unsigned int)list.size();
+  unsigned int nbsimList = static_cast<unsigned int>(list.size());
 
   if (nbsimList < 1)
     return;
@@ -870,7 +867,6 @@ void vpImageSimulator::getImage(vpImage<vpRGBa> &I, std::list<vpImageSimulator> 
   vpImageSimulator **simList = new vpImageSimulator *[nbsimList];
 
   double topFinal = height + 1;
-  ;
   double bottomFinal = -1;
   double leftFinal = width + 1;
   double rightFinal = -1;
@@ -913,14 +909,14 @@ void vpImageSimulator::getImage(vpImage<vpRGBa> &I, std::list<vpImageSimulator> 
   vpRGBa *bitmap = I.bitmap;
   vpImagePoint ip;
 
-  for (unsigned int i = (unsigned int)topFinal; i < (unsigned int)bottomFinal; i++) {
-    for (unsigned int j = (unsigned int)leftFinal; j < (unsigned int)rightFinal; j++) {
+  for (unsigned int i = static_cast<unsigned int>(topFinal); i < static_cast<unsigned int>(bottomFinal); i++) {
+    for (unsigned int j = static_cast<unsigned int>(leftFinal); j < static_cast<unsigned int>(rightFinal); j++) {
       zmin = -1;
       double x = 0, y = 0;
       ip.set_ij(i, j);
       vpPixelMeterConversion::convertPoint(cam, ip, x, y);
       ip.set_ij(y, x);
-      for (int k = 0; k < (int)nbsimList; k++) {
+      for (int k = 0; k < static_cast<int>(nbsimList); k++) {
         double z = 0;
         if (simList[k]->getPixelDepth(ip, z)) {
           if (z < zmin || zmin < 0) {
@@ -1275,7 +1271,7 @@ bool vpImageSimulator::getPixel(const vpImagePoint &iP, unsigned char &Ipixelpla
     if (interp == BILINEAR_INTERPOLATION)
       Ipixelplan = Ig.getValue(i2, j2);
     else if (interp == SIMPLE)
-      Ipixelplan = Ig[(unsigned int)i2][(unsigned int)j2];
+      Ipixelplan = Ig[static_cast<unsigned int>(i2)][static_cast<unsigned int>(j2)];
     return true;
   }
   else
@@ -1329,7 +1325,7 @@ bool vpImageSimulator::getPixel(vpImage<unsigned char> &Isrc, const vpImagePoint
     if (interp == BILINEAR_INTERPOLATION)
       Ipixelplan = Isrc.getValue(i2, j2);
     else if (interp == SIMPLE)
-      Ipixelplan = Isrc[(unsigned int)i2][(unsigned int)j2];
+      Ipixelplan = Isrc[static_cast<unsigned int>(i2)][static_cast<unsigned int>(j2)];
     return true;
   }
   else
@@ -1382,7 +1378,7 @@ bool vpImageSimulator::getPixel(const vpImagePoint &iP, vpRGBa &Ipixelplan)
     if (interp == BILINEAR_INTERPOLATION)
       Ipixelplan = Ic.getValue(i2, j2);
     else if (interp == SIMPLE)
-      Ipixelplan = Ic[(unsigned int)i2][(unsigned int)j2];
+      Ipixelplan = Ic[static_cast<unsigned int>(i2)][static_cast<unsigned int>(j2)];
     return true;
   }
   else
@@ -1435,7 +1431,7 @@ bool vpImageSimulator::getPixel(vpImage<vpRGBa> &Isrc, const vpImagePoint &iP, v
     if (interp == BILINEAR_INTERPOLATION)
       Ipixelplan = Isrc.getValue(i2, j2);
     else if (interp == SIMPLE)
-      Ipixelplan = Isrc[(unsigned int)i2][(unsigned int)j2];
+      Ipixelplan = Isrc[static_cast<unsigned int>(i2)][static_cast<unsigned int>(j2)];
     return true;
   }
   else

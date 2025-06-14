@@ -1,7 +1,6 @@
-/****************************************************************************
- *
+/*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,8 +29,8 @@
  *
  * Description:
  * Load XML Parameter for Model Based Tracker.
- *
-*****************************************************************************/
+ */
+
 #include <visp3/core/vpConfig.h>
 
 #include <clocale>
@@ -51,26 +50,26 @@ class vpMbtXmlGenericParser::Impl
 public:
   Impl(int type = EDGE_PARSER)
     : m_parserType(type),
-    //<camera>
+    // <camera>
     m_cam(),
-    //<face>
+    // <face>
     m_angleAppear(70), m_angleDisappear(80), m_hasNearClipping(false), m_nearClipping(false), m_hasFarClipping(false),
     m_farClipping(false), m_fovClipping(false),
-    //<lod>
+    // <lod>
     m_useLod(false), m_minLineLengthThreshold(50.0), m_minPolygonAreaThreshold(2500.0),
-    //<ecm>
+    // <ecm>
     m_ecm(),
-    //<klt>
+    // <klt>
     m_kltMaskBorder(0), m_kltMaxFeatures(0), m_kltWinSize(0), m_kltQualityValue(0.), m_kltMinDist(0.),
     m_kltHarrisParam(0.), m_kltBlockSize(0), m_kltPyramidLevels(0),
-    //<depth_normal>
+    // <depth_normal>
     m_depthNormalFeatureEstimationMethod(vpMbtFaceDepthNormal::ROBUST_FEATURE_ESTIMATION),
     m_depthNormalPclPlaneEstimationMethod(2), m_depthNormalPclPlaneEstimationRansacMaxIter(200),
     m_depthNormalPclPlaneEstimationRansacThreshold(0.001), m_depthNormalSamplingStepX(2),
     m_depthNormalSamplingStepY(2),
-    //<depth_dense>
+    // <depth_dense>
     m_depthDenseSamplingStepX(2), m_depthDenseSamplingStepY(2),
-    //<projection_error>
+    // <projection_error>
     m_projectionErrorMe(), m_projectionErrorKernelSize(2), // 5x5
     m_nodeMap(), m_verbose(true)
   {
@@ -657,12 +656,16 @@ public:
   {
     bool edge_threshold_type_node = false;
     bool edge_threshold_node = false;
+    bool edge_min_node = false;
+    bool edge_ratio_node = false;
     bool mu1_node = false;
     bool mu2_node = false;
 
     // current data values.
     vpMe::vpLikelihoodThresholdType d_edge_threshold_type = m_ecm.getLikelihoodThresholdType();
     double d_edge_threshold = m_ecm.getThreshold();
+    double d_edge_min_threshold = m_ecm.getMinThreshold();
+    double d_edge_thresh_ratio = m_ecm.getThresholdMarginRatio();
     double d_mu1 = m_ecm.getMu1();
     double d_mu2 = m_ecm.getMu2();
 
@@ -679,6 +682,16 @@ public:
           case edge_threshold:
             d_edge_threshold = dataNode.text().as_int();
             edge_threshold_node = true;
+            break;
+
+          case edge_threshold_ratio:
+            d_edge_thresh_ratio = dataNode.text().as_double();
+            edge_ratio_node = true;
+            break;
+
+          case edge_min_threshold:
+            d_edge_min_threshold = dataNode.text().as_double();
+            edge_min_node = true;
             break;
 
           case mu1:
@@ -702,27 +715,51 @@ public:
     m_ecm.setMu2(d_mu2);
     m_ecm.setLikelihoodThresholdType(d_edge_threshold_type);
     m_ecm.setThreshold(d_edge_threshold);
+    m_ecm.setThresholdMarginRatio(d_edge_thresh_ratio);
+    m_ecm.setMinThreshold(d_edge_min_threshold);
 
     if (m_verbose) {
-      if (!edge_threshold_type_node)
+      if (!edge_threshold_type_node) {
         std::cout << "me : contrast : threshold type " << m_ecm.getLikelihoodThresholdType() << " (default)" << std::endl;
-      else
+      }
+      else {
         std::cout << "me : contrast : threshold type " << m_ecm.getLikelihoodThresholdType() << std::endl;
+      }
 
-      if (!edge_threshold_node)
+      if (!edge_threshold_node) {
         std::cout << "me : contrast : threshold " << m_ecm.getThreshold() << " (default)" << std::endl;
-      else
+      }
+      else {
         std::cout << "me : contrast : threshold " << m_ecm.getThreshold() << std::endl;
+      }
 
-      if (!mu1_node)
+      if (!edge_min_node) {
+        std::cout << "me : contrast : min threshold " << m_ecm.getMinThreshold() << " (default)" << std::endl;
+      }
+      else {
+        std::cout << "me : contrast : min threshold " << m_ecm.getMinThreshold() << std::endl;
+      }
+
+      if (!edge_ratio_node) {
+        std::cout << "me : contrast : threshold margin ratio " << m_ecm.getThresholdMarginRatio() << " (default)" << std::endl;
+      }
+      else {
+        std::cout << "me : contrast : threshold margin ratio " << m_ecm.getThresholdMarginRatio() << std::endl;
+      }
+
+      if (!mu1_node) {
         std::cout << "me : contrast : mu1 " << m_ecm.getMu1() << " (default)" << std::endl;
-      else
+      }
+      else {
         std::cout << "me : contrast : mu1 " << m_ecm.getMu1() << std::endl;
+      }
 
-      if (!mu2_node)
+      if (!mu2_node) {
         std::cout << "me : contrast : mu2 " << m_ecm.getMu2() << " (default)" << std::endl;
-      else
+      }
+      else {
         std::cout << "me : contrast : mu2 " << m_ecm.getMu2() << std::endl;
+      }
     }
   }
 
@@ -792,9 +829,11 @@ public:
   void read_ecm_range(const pugi::xml_node &node)
   {
     bool tracking_node = false;
+    bool init_node = false;
 
     // current data values.
     unsigned int m_range_tracking = m_ecm.getRange();
+    int initRange = 0;
 
     for (pugi::xml_node dataNode = node.first_child(); dataNode; dataNode = dataNode.next_sibling()) {
       if (dataNode.type() == pugi::node_element) {
@@ -803,6 +842,10 @@ public:
           switch (iter_data->second) {
           case tracking:
             m_range_tracking = dataNode.text().as_uint();
+            tracking_node = true;
+            break;
+          case init_range:
+            initRange = dataNode.text().as_int();
             tracking_node = true;
             break;
 
@@ -814,12 +857,21 @@ public:
     }
 
     m_ecm.setRange(m_range_tracking);
+    m_ecm.setInitRange(initRange);
 
     if (m_verbose) {
-      if (!tracking_node)
+      if (!tracking_node) {
         std::cout << "me : range : tracking : " << m_ecm.getRange() << " (default)" << std::endl;
-      else
+      }
+      else {
         std::cout << "me : range : tracking : " << m_ecm.getRange() << std::endl;
+      }
+      if (!init_node) {
+        std::cout << "me : range : init range : " << m_ecm.getInitRange() << " (default)" << std::endl;
+      }
+      else {
+        std::cout << "me : range : init range : " << initRange << std::endl;
+      }
     }
   }
 
@@ -1388,16 +1440,16 @@ protected:
 
   enum vpDataToParseMb
   {
-    //<conf>
+    // <conf>
     conf,
-    //<face>
+    // <face>
     face,
     angle_appear,
     angle_disappear,
     near_clipping,
     far_clipping,
     fov_clipping,
-    //<camera>
+    // <camera>
     camera,
     height,
     width,
@@ -1409,21 +1461,24 @@ protected:
     use_lod,
     min_line_length_threshold,
     min_polygon_area_threshold,
-    //<ecm>
+    // <ecm>
     ecm,
     mask,
     size,
     nb_mask,
+    init_range,
     range,
     tracking,
     contrast,
     edge_threshold,
+    edge_min_threshold,
+    edge_threshold_ratio,
     edge_threshold_type,
     mu1,
     mu2,
     sample,
     step,
-    //<klt>
+    // <klt>
     klt,
     mask_border,
     max_features,
@@ -1433,7 +1488,7 @@ protected:
     harris,
     size_block,
     pyramid_lvl,
-    //<depth_normal>
+    // <depth_normal>
     depth_normal,
     feature_estimation_method,
     PCL_plane_estimation,
@@ -1443,12 +1498,12 @@ protected:
     depth_sampling_step,
     depth_sampling_step_X,
     depth_sampling_step_Y,
-    //<depth_dense>
+    // <depth_dense>
     depth_dense,
     depth_dense_sampling_step,
     depth_dense_sampling_step_X,
     depth_dense_sampling_step_Y,
-    //<projection_error>
+    // <projection_error>
     projection_error,
     projection_error_sample_step,
     projection_error_kernel_size
@@ -1486,11 +1541,14 @@ protected:
     m_nodeMap["mask"] = mask;
     m_nodeMap["size"] = size;
     m_nodeMap["nb_mask"] = nb_mask;
+    m_nodeMap["init_range"] = init_range;
     m_nodeMap["range"] = range;
     m_nodeMap["tracking"] = tracking;
     m_nodeMap["contrast"] = contrast;
     m_nodeMap["edge_threshold_type"] = edge_threshold_type;
     m_nodeMap["edge_threshold"] = edge_threshold;
+    m_nodeMap["edge_min_threshold"] = edge_min_threshold;
+    m_nodeMap["edge_threshold_margin_ratio"] = edge_threshold_ratio;
     m_nodeMap["mu1"] = mu1;
     m_nodeMap["mu2"] = mu2;
     m_nodeMap["sample"] = sample;
@@ -1920,6 +1978,6 @@ void vpMbtXmlGenericParser::setVerbose(bool verbose) { m_impl->setVerbose(verbos
 END_VISP_NAMESPACE
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work around to avoid warning: libvisp_core.a(vpMbtXmlGenericParser.cpp.o) has no symbols
-void dummy_vpMbtXmlGenericParser() { };
+void dummy_vpMbtXmlGenericParser() { }
 
 #endif

@@ -1,7 +1,6 @@
-/****************************************************************************
- *
+/*
  * ViSP, open source Visual Servoing Platform software.
- * Copyright (C) 2005 - 2023 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2025 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,8 +28,7 @@
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * Description:
  * Real-time 3D point clouds plotter based on the PCL library.
- *
-*****************************************************************************/
+ */
 
 #include <visp3/gui/vpColorBlindFriendlyPalette.h>
 #include <visp3/core/vpIoTools.h>
@@ -105,9 +103,9 @@ std::vector<double> vpColorBlindFriendlyPalette::to_colorRatio() const
 {
   vpColor color = s_palette[to_uint(m_colorID)];
   std::vector<double> v_rgb;
-  v_rgb.push_back((double)color.R / 255.0);
-  v_rgb.push_back((double)color.G / 255.0);
-  v_rgb.push_back((double)color.B / 255.0);
+  v_rgb.push_back(static_cast<double>(color.R) / 255.0);
+  v_rgb.push_back(static_cast<double>(color.G) / 255.0);
+  v_rgb.push_back(static_cast<double>(color.B) / 255.0);
   return v_rgb;
 }
 
@@ -135,7 +133,7 @@ std::string vpColorBlindFriendlyPalette::to_string() const
 std::string vpColorBlindFriendlyPalette::getAvailableColorsNames(const std::string &prefix, const std::string &separator, const std::string &suffix)
 {
   std::string list(prefix);
-  const unsigned int nbAvailableColors = (unsigned int)Palette::COUNT;
+  const unsigned int nbAvailableColors = static_cast<unsigned int>(Palette::COUNT);
   for (unsigned int i = 0; i < nbAvailableColors - 1; i++) {
     std::string nameCandidateID = s_paletteNames[i];
     list += nameCandidateID + separator;
@@ -146,7 +144,7 @@ std::string vpColorBlindFriendlyPalette::getAvailableColorsNames(const std::stri
 
 unsigned int vpColorBlindFriendlyPalette::to_uint(const Palette &colorID)
 {
-  const unsigned int nbAvailableColors = (unsigned int)Palette::COUNT;
+  const unsigned int nbAvailableColors = static_cast<unsigned int>(Palette::COUNT);
   unsigned int ID = nbAvailableColors;
   std::string nameSearchedColor = to_string(colorID);
   bool wasFound = false;
